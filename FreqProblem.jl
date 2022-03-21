@@ -1,3 +1,5 @@
+include("ShallowWaterApprox.jl")
+
 ##################################################
 # Ice-shelf and fluid/bedrock parameters
 ##################################################

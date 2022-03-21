@@ -8,7 +8,7 @@ function dispersion_elastic_surface(alpha, beta, gamma, N, h)
   gamma = gamma/h
   del = (1 - alpha*gamma)/alpha * (beta/alpha)^(-1/5)
   H = (beta/alpha)^(-1/5)
-  K = RTS_ice_roots(del, H, N+1)
+  K = RTS_ice_roots(real(del), real(H), N+1)
   mroots = -1im*(beta/alpha)^(-1/5)*K[1:N+1]
   mroots = mroots/h
   v = mroots[3]
