@@ -1,5 +1,3 @@
-include("Input.jl")
-
 ##################################################
 # Ice-shelf and fluid/bedrock parameters
 ##################################################
@@ -11,7 +9,7 @@ h = 200
 ice = Ice(ρᵢ, Eᵢ, ν, L, h)
 
 ρₒ = 1025.0
-k₀ = 1e9
+k₀ = 1e4
 g = 9.8
 H = 500
 x₀ = 0.7*L
@@ -20,21 +18,24 @@ fluid = Fluid(ρₒ, k₀, g, H, x₀)
 #################################################
 # Eg 1: Solve one frequency domain problem
 #################################################
-ω = 2π*0.02
-c,a₀,b,m,p,ndp = solve_frequency_problem(ice, fluid, ω, FreeBedrock())
-Aₚ = ndp.geo[end]/(1im*ω)
-@show abs(a₀/Aₚ)
+BeamType = FreeBedrock()
+WaterType = ShallowWater()
+ω = 2π/4000
+sol₁ = solve(ice, fluid, ω, BeamType, WaterType)
+Aₚ = g/(1im*ω)
+@show abs(sol₁.a₀[1]/Aₚ)
 # Visualize the solution
-x₁ = 0:0.01:ndp.geo[4]
-U₁ = u₁(x₁, m, c, ndp, FreeBedrock())
+xg = sol₁.ndp.geo[4] # Grounding line location
+LL = sol₁.ndp.geo[1] # Non dimensional length
+x₁ = 0:0.01:xg; x₂ = xg:0.01:LL
+U₁ = u₁(x₁, sol₁)
+U₂ = u₂(x₂, sol₁)
 plt = plot(x₁, abs.(U₁), label="\$x < x_g\$")
-x₂ = ndp.geo[4]:0.01:ndp.geo[1]
-U₂ = u₂(x₂, p, b, ndp, FreeBedrock())
 plot!(plt, x₂, abs.(U₂), label="\$ x > x_g\$")
 xlabel!(plt, "\$x\$ (Non-Dim)")
 ylabel!(plt, "\$|u|\$ (in m)")
 title!(plt, "Displacement profiles for \$k_0 = "*string(k₀)*"\$ Nm\$^{-3}\$")
-display(plt); readline()
+display(plt); #readline()
 savefig(plt, "Example1.pdf")
 
 #################################################
@@ -44,35 +45,32 @@ savefig(plt, "Example1.pdf")
 Uₛ¹ = zeros(length(ωₛ), 1)
 Uₛ² = zeros(length(ωₛ), 1)
 for i in 1:length(ωₛ)
-  local c,a₀,b,m,p,ndp = solve_frequency_problem(ice, fluid, ωₛ[i], FreeBedrock())
-  local U₁ = u₁(x₁, m, c, ndp, FreeBedrock())
-  Uₛ¹[i] = maximum(abs.(U₁))
-  local U₂ = u₂(x₂, p, b, ndp, FreeBedrock())
-  Uₛ²[i] = maximum(abs.(U₂))
+  sol = solve(ice, fluid, ωₛ[i], BeamType, WaterType)
+  Uₛ¹[i] = maximum(abs.(u₁(x₁, sol)))
+  Uₛ²[i] = maximum(abs.(u₂(x₂, sol)))
 end
-plt = plot(ωₛ, Uₛ¹, label="\$x<x_g\$")
+plt = plot(ωₛ, Uₛ¹, label="\$x < x_g\$")
 plot!(plt, ωₛ, Uₛ², label="\$x > x_g \$")
 xlabel!(plt,"\$\\omega\$ (in s\$^{-1}\$)")
 ylabel!(plt,"\$|u|\$ (in m)")
-display(plt); readline()
+display(plt);
 title!(plt, "\$k_0 = "*string(k₀)*"\$ Nm\$^{-3}\$")
 savefig(plt, "Example2.pdf")
 
 ############################################################
 # Eg 3: u(x₀) (Grounding Line disp.) vs k₀ (Spring Const.)
 ############################################################
-k₀ₛ = 10 .^LinRange(3,7,100)
+k₀ₛ = 10 .^LinRange(6,9,100)
 uₓ₀ₛ = zeros(length(k₀ₛ), 1)
 ∂ₓuₓ₀ₛ = zeros(length(k₀ₛ), 1)
 p1 = plot()
 p2 = plot()
-for ω in [2π/50, 2π/100, 2π/200]
+for ω in [2π/50, 2π/100, 2π/200, 2π/8000]
   for i = 1:length(k₀ₛ)
-    local k₀ = k₀ₛ[i]
-    local fluid = Fluid(ρₒ, k₀, g, H, x₀)
-    local c,a₀,b,m,p,ndp = solve_frequency_problem(ice, fluid, ω, FreeBedrock())
-    uₓ₀ₛ[i] = abs(u₁(ndp.geo[4], m, c, ndp, FreeBedrock()))
-    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(ndp.geo[4], m, c, ndp, FreeBedrock()))
+    fl = Fluid(ρₒ, k₀ₛ[i], g, H, x₀)
+    sol = solve(ice, fluid, ω, BeamType, WaterType)
+    uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol))
+    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol))
   end
   plot!(p1, k₀ₛ, uₓ₀ₛ, label="\$T = \$ "*string(round((2π)/ω, digits=4))*" \$s\$")
   plot!(p2, k₀ₛ, ∂ₓuₓ₀ₛ, label="\$T = \$ "*string(round((2π)/ω, digits=4))*" \$s\$")
@@ -81,6 +79,5 @@ xlabel!(p1, "\$k_0\$ (Nm\$^{-3}\$)")
 ylabel!(p1, "\$|u(x_g)|\$")
 ylabel!(p2, "\$|\\partial_x u(x_g)|\$")
 plt = plot(p1,p2,layout=(2,1))
-display(plt); readline()
-display(plt)
+display(plt); #readline()
 savefig(plt, "Example3.pdf")
