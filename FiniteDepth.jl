@@ -1,5 +1,5 @@
-include("Input.jl")
-include("FiniteDepthApprox.jl")
+include("FiniteDepthModel.jl")
+
 ##################################################
 # Ice-shelf and fluid/bedrock parameters
 ##################################################
