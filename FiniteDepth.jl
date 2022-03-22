@@ -13,12 +13,12 @@ ice = Ice(ρᵢ, Eᵢ, ν, L, h)
 g = 9.8
 H = 500
 fluid = Fluid(ρₒ, 0, g, H, 0) # Set the bedrock parameters = 0
-ω = 2π/2000
+ω = 2π/50
 
 #############################################################################
 # Eg 1: Solve and compare finite depth solution  to shallow water solution  #
 #############################################################################
-BeamType = FreeClamped()
+BeamType = FreeHinged()
 NModes = 4
 fd = FiniteDepth(NModes)
 solϕ = solve(ice, fluid, ω, BeamType, fd)

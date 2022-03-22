@@ -18,6 +18,10 @@ struct FiniteDepthSolution
   BeamType
 end
 
+function solve(Ice::Ice, Fluid::Fluid, ω, fd::FiniteDepth)
+  solve(Ice, Fluid, ω, FreeClamped(), fd)
+end
+
 function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}, fd::FiniteDepth)
   N = fd.N
   ndp = non_dimensionalize(Ice, Fluid, ω)
@@ -67,10 +71,18 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   B2 = hcat(D3.*transpose(repeat(κ, 1, N+1)), D3.*transpose(repeat(-κ.*exp.(-κ*LL), 1, N+1)))
   B3 = hcat(D1.*transpose(repeat(κ.*exp.(-κ*LL), 1, N+1)), -D1.*transpose(repeat((κ), 1, N+1)))
 
-  B4 = transpose(hcat(-κ.*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                      (κ.^2).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                      -(κ.^3).*tan.(κ*(HH-γ)),
-                      (κ.^4).*tan.(κ*(HH-γ))))
+  B4 = zeros(ComplexF64, N+1, 4)
+  if(ptype==FreeClamped)
+    B4 = transpose(hcat(-κ.*exp.(-κ*LL).*tan.(κ*(HH-γ)),
+                        (κ.^2).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
+                        -(κ.^3).*tan.(κ*(HH-γ)),
+                        (κ.^4).*tan.(κ*(HH-γ))))
+  else
+    B4 = transpose(hcat(-κ.*exp.(-κ*LL).*tan.(κ*(HH-γ)),
+                        -(κ.^3).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
+                        -(κ.^3).*tan.(κ*(HH-γ)),
+                        (κ.^4).*tan.(κ*(HH-γ))))
+  end
 
   B5 = transpose(hcat(-κ.*tan.(κ*(HH-γ)),
             -(κ.^2).*tan.(κ*(HH-γ)),
@@ -96,7 +108,6 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   FiniteDepthSolution(aₘ, cₘ⁺, cₘ⁻, vec(k), κ, vec(zeros(ComplexF64,2,1)),
                       vec(zeros(ComplexF64,2,1)), ndp, ptype)
 end
-
 function u₁(x, sol::FiniteDepthSolution)
   α = sol.ndp.α
   g = sol.ndp.geo[end]
@@ -116,3 +127,7 @@ function u₁(x, sol::FiniteDepthSolution)
   end
   X
 end
+
+############################################
+# Finite depth model with grounding line
+############################################

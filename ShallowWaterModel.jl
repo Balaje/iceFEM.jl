@@ -111,10 +111,15 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, ::ShallowWater)
   m = roots(pl)
   m = m[sortperm(real(m), rev=true)]
   # Solve the beam-bedrock equation
-  pl = Polynomial([1 + 𝑘^4 - γ*α, 0, 0, 0, 1])
+  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
   p = roots(pl)
-  p₁ = p[(real(p) .> 1e-9)][1]
-  p₂ = p[(real(p) .> 1e-9)][2]
+  if(real(𝑘^4 - γ*α) > 0)
+    p₁ = p[(real(p) .> 1e-9)][1]
+    p₂ = p[(real(p) .> 1e-9)][2]
+  else
+    p₁ = p[abs.(real(p)) .< 1e-9][1]
+    p₂ = p[abs.(real(p)) .< 1e-9][2]
+  end
   # 3) Open-ocean
   k = sqrt(α*𝑙/H)
   # Construct the linear system
