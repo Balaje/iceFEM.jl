@@ -113,6 +113,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, ::ShallowWater)
   # Solve the beam-bedrock equation
   pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
   p = roots(pl)
+  p₁ = 0; p₂ = 0
   if(real(𝑘^4 - γ*α) > 0)
     p₁ = p[(real(p) .> 1e-9)][1]
     p₂ = p[(real(p) .> 1e-9)][2]
