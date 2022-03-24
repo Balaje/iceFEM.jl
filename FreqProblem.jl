@@ -11,7 +11,7 @@ h = 500
 ice = Ice(ρᵢ, Eᵢ, ν, L, h)
 
 ρₒ = 1025.0
-k₀ = 1e4
+k₀ = 1e9
 g = 9.8
 H = 600
 x₀ = 0.7*L
@@ -22,7 +22,7 @@ fluid = Fluid(ρₒ, k₀, g, H, x₀)
 #################################################
 BeamType = FreeBedrock()
 WaterType = ShallowWater()
-ω = 2π/20
+ω = 2π/200
 sol₁ = solve(ice, fluid, ω, BeamType, WaterType)
 Aₚ = g/(1im*ω)
 @show abs(sol₁.a₀[1]/Aₚ)
@@ -41,12 +41,30 @@ title!(plt, "Displacement profiles for \$k_0 = "*string(k₀)*"\$ Nm\$^{-3}\$,\n
 #display(plt); readline()
 #savefig(plt, "Example1.pdf")
 
-#################################################
-# Eg 2: Displacement vs Freq.
-#################################################
+#########################################################################
+## Check displacement, slope, shear-force and bending-moment continuity #
+#########################################################################
+@assert u₁(xg, sol₁) ≈ u₂(xg, sol₁)
+@assert ∂ₓu₁(xg, sol₁) ≈ ∂ₓu₂(xg, sol₁)
+@assert ∂ₓ²u₁(xg, sol₁) ≈ ∂ₓ²u₂(xg, sol₁)
+@assert ∂ₓ³u₁(xg, sol₁) ≈ ∂ₓ³u₂(xg, sol₁)
+
+##########################################################################
+## Check correctness of the non-local boundary condition (D2N map at GL) #
+##########################################################################
+𝐴 = (-sol₁.p[1])*(-sol₁.p[2])
+𝐵 = (-sol₁.p[1] + -sol₁.p[2])
+𝐶 = ( (-sol₁.p[1])^2 + (-sol₁.p[1])*(-sol₁.p[2]) + (-sol₁.p[2])^2 )
+@assert -𝐴*(u₁(xg, sol₁)) + (𝐵 )*(∂ₓu₁(xg,sol₁)) ≈ ∂ₓ²u₁(xg, sol₁)
+@assert (-𝐴*𝐵)*(u₁(xg, sol₁)) + (𝐶 )*(∂ₓu₁(xg,sol₁)) ≈ ∂ₓ³u₁(xg, sol₁)
+
+##############################
+# Eg 2: Displacement vs Freq.#
+##############################
 ωₛ = 2π*LinRange(0.001, 0.02, 500)
 Uₛ¹ = zeros(length(ωₛ), 1)
 Uₛ² = zeros(length(ωₛ), 1)
+
 for i in 1:length(ωₛ)
   local sol = solve(ice, fluid, ωₛ[i], BeamType, WaterType)
   Uₛ¹[i] = maximum(abs.(u₁(x₁, sol)))
@@ -88,27 +106,59 @@ plt = plot(p1,p2,layout=(2,1))
 ############################################################
 # Eg 3: u(x₀) (Grounding Line disp.) vs k₀ (Spring Const.)
 ############################################################
-k₀ₛ = 10 .^LinRange(6,7,100)
+k₀ₛ = 10 .^LinRange(6,9,100)
 uₓ₀ₛ = zeros(length(k₀ₛ), 1)
 ∂ₓuₓ₀ₛ = zeros(length(k₀ₛ), 1)
 p1 = plot()
 p2 = plot()
-ω = 2π/2000
-for th in [100, 200, 300, 400, 500]
+p3 = plot()
+p4 = plot()
+p5 = plot()
+p6 = plot()
+
+ω = 2π/200
+
+𝐴s = zeros(ComplexF64, length(k₀ₛ), 1)
+𝐵s = zeros(ComplexF64, length(k₀ₛ), 1)
+𝐶s = zeros(ComplexF64, length(k₀ₛ), 1)
+
+for th in [200,500]
   for i = 1:length(k₀ₛ)
     ic = Ice(ρᵢ, Eᵢ, ν, L, th)
     fl = Fluid(ρₒ, k₀ₛ[i], g, H, x₀)
     local sol = solve(ic, fl, ω, BeamType, WaterType)
     uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol))
     ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol))
+
+    𝐴s[i] = (-sol.p[1])*(-sol.p[2])
+    𝐵s[i] = (-sol.p[1] + -sol.p[2])
+    𝐶s[i] = ( (-sol.p[1])^2 + (-sol.p[1])*(-sol.p[2]) + (-sol.p[2])^2 )
   end
-  plot!(p1, k₀ₛ, uₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$s\$")
-  plot!(p2, k₀ₛ, ∂ₓuₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$s\$")
+  plot!(p1, k₀ₛ, uₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+  plot!(p2, k₀ₛ, ∂ₓuₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+
+  plot!(p3, k₀ₛ/10^6, -real(𝐴s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+  plot!(p4, k₀ₛ/10^6, real(𝐵s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+  plot!(p5, k₀ₛ/10^6, real(𝐴s.*𝐵s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+  plot!(p6, k₀ₛ/10^6, real(𝐶s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
 end
 xlabel!(p1, "\$k_0\$ (Nm\$^{-3}\$)")
 ylabel!(p1, "\$|u(x_g)|\$")
 ylabel!(p2, "\$|\\partial_x u(x_g)|\$")
+
+xlabel!(p3, "\$k_0\$ (MPa/m)")
+xlabel!(p4, "\$k_0\$ (MPa/m)")
+xlabel!(p5, "\$k_0\$ (MPa/m)")
+xlabel!(p6, "\$k_0\$ (MPa/m)")
+
+ylabel!(p3, "\$-p_1p_2\$")
+ylabel!(p4, "\$p_1 + p_2\$")
+ylabel!(p5, "\$p_1p_2 (p_1 + p_2)\$")
+ylabel!(p6, "\$p_1^2 + p_1p_2 + p_2^2\$")
+
 plt = plot(p1,p2,layout=(2,1))
+plt1 = plot(p3,p4,p5,p6,layout=(2,2))
 title!(plt, "Wave Period \$ T = "*string(round(2π/ω, digits=4))*"\$ s")
 #display(plt); #readline()
 #savefig(plt, "Example5.pdf")
+savefig(plt1, "Example5_1.pdf")

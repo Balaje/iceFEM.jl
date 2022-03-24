@@ -194,7 +194,7 @@ function ∂ₓu₁(x, sol::ShallowWaterSolution)
   elseif(sol.BeamType isa FreeBedrock)
     X = sol.ndp.X
     xg = sol.ndp.geo[4]
-    return (X/𝑙)*(-c[1]*m[1]^3*exp.(-m[1]*x) -
+    return (X)*(-c[1]*m[1]^3*exp.(-m[1]*x) -
       c[2]*m[2]^3*exp.(-m[2]*x) +
       c[3]*m[3]^3*exp.(m[3]*x) +
       c[4]*m[4]^3*exp.(m[4]*x) -
@@ -207,6 +207,81 @@ function ∂ₓu₂(x, sol::ShallowWaterSolution)
   p = sol.p
   b = sol.b
   @assert length(p) == length(b)
-  (1/sol.ndp.𝑙)*(-p[1]*b[1]*exp.(-p[1]*(x .-xg))
-                 -p[2]*b[2]*exp.(-p[2]*(x .-xg)))
+  (-p[1]*b[1]*exp.(-p[1]*(x .-xg))
+   -p[2]*b[2]*exp.(-p[2]*(x .-xg)))
+end
+
+######################################
+# Function to compute Bending moment #
+######################################
+function ∂ₓ²u₁(x, sol::ShallowWaterSolution)
+  X = sol.ndp.X
+  LL = sol.ndp.geo[1]
+  m = sol.m
+  c = sol.c
+  𝑙 = sol.ndp.𝑙
+  @assert length(m) == length(c)
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    return (X)*(c[1]*m[1]^4*exp.(m[1]*(x .- LL)) +
+      c[2]*m[2]^4*exp.(m[2]*(x .- LL)) +
+      c[3]*m[3]^4*exp.(m[3]*x) +
+      c[4]*m[4]^4*exp.(m[4]*x) +
+      c[5]*m[5]^4*exp.(m[5]*x) +
+      c[6]*m[6]^4*exp.(m[6]*x))
+  elseif(sol.BeamType isa FreeBedrock)
+    X = sol.ndp.X
+    xg = sol.ndp.geo[4]
+    return (X)*(c[1]*m[1]^4*exp.(-m[1]*x) +
+      c[2]*m[2]^4*exp.(-m[2]*x) +
+      c[3]*m[3]^4*exp.(m[3]*x) +
+      c[4]*m[4]^4*exp.(m[4]*x) +
+      c[5]*m[5]^4*exp.(-m[5]*(x .- xg)) +
+      c[6]*m[6]^4*exp.(-m[6]*(x .- xg)))
+  end
+end
+function ∂ₓ²u₂(x, sol::ShallowWaterSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  @assert length(p) == length(b)
+  (p[1]^2*b[1]*exp.(-p[1]*(x .-xg)) +
+    p[2]^2*b[2]*exp.(-p[2]*(x .-xg)))
+end
+
+
+###################################
+# Function to compute Shear force #
+###################################
+function ∂ₓ³u₁(x, sol::ShallowWaterSolution)
+  X = sol.ndp.X
+  LL = sol.ndp.geo[1]
+  m = sol.m
+  c = sol.c
+  𝑙 = sol.ndp.𝑙
+  @assert length(m) == length(c)
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    return (X)*(c[1]*m[1]^5*exp.(m[1]*(x .- LL)) +
+      c[2]*m[2]^5*exp.(m[2]*(x .- LL)) +
+      c[3]*m[3]^5*exp.(m[3]*x) +
+      c[4]*m[4]^5*exp.(m[4]*x) +
+      c[5]*m[5]^5*exp.(m[5]*x) +
+      c[6]*m[6]^5*exp.(m[6]*x))
+  elseif(sol.BeamType isa FreeBedrock)
+    X = sol.ndp.X
+    xg = sol.ndp.geo[4]
+    return (X)*(-c[1]*m[1]^5*exp.(-m[1]*x) -
+      c[2]*m[2]^5*exp.(-m[2]*x) +
+      c[3]*m[3]^5*exp.(m[3]*x) +
+      c[4]*m[4]^5*exp.(m[4]*x) -
+      c[5]*m[5]^5*exp.(-m[5]*(x .- xg)) -
+      c[6]*m[6]^5*exp.(-m[6]*(x .- xg)))
+  end
+end
+function ∂ₓ³u₂(x, sol::ShallowWaterSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  @assert length(p) == length(b)
+  (-p[1]^3*b[1]*exp.(-p[1]*(x .-xg))
+   -p[2]^3*b[2]*exp.(-p[2]*(x .-xg)))
 end
