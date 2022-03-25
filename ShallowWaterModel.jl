@@ -14,8 +14,8 @@ end
 # Function solve: Solves a frequency-domain problem
 # Default option is to solve the ice-shelf problem using the FreeClamped() condition
 #######################################################################################
-function solve(Ice::Ice, Fluid::Fluid)
-  solve_frequency_problem(Ice, Fluid, FreeClamped())
+function solve(Ice::Ice, Fluid::Fluid, ω)
+  solve(Ice, Fluid, ω, FreeClamped())
 end
 
 function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}, ::ShallowWater)
