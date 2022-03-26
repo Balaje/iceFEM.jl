@@ -10,7 +10,7 @@ fluid = Fluid(1025, 1e6, 9.8, 500, 0.7*40000);
 Aₚ = 9.8/(1im*ω)
 
 #######################
-# Solve hinged beam under
+# Solve bedrock beam under
 # 1) Shallow-water conditions
 # 2) Finite depth conditions
 #######################
