@@ -105,31 +105,11 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   sol = LHS\RHS
   aₘ = sol[1:N+1]
   cₘ = sol[N+2:end]
-  cₘ⁺ = cₘ[1:N+3]
-  cₘ⁻ = cₘ[N+4:2N+6]
-  FiniteDepthSolution(aₘ, cₘ⁺, cₘ⁻, vec(k), κ, vec(zeros(ComplexF64,2,1)),
+  cₘ⁻ = cₘ[1:N+3]
+  cₘ⁺ = cₘ[N+4:2N+6]
+  FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), κ, vec(zeros(ComplexF64,2,1)),
                       vec(zeros(ComplexF64,2,1)), ndp, ptype)
 end
-function u₁(x, sol::FiniteDepthSolution)
-  α = sol.ndp.α
-  g = sol.ndp.geo[end]
-  𝑙 = sol.ndp.𝑙
-  ω = √(α*g/𝑙)
-  cₘ⁺ = sol.cₘ⁺
-  cₘ⁻ = sol.cₘ⁻
-  LL = sol.ndp.geo[1]
-  HH = sol.ndp.geo[2]
-  γ = sol.ndp.γ
-  κ = sol.κₘ
-
-  X = 0*x
-  for m in 1:length(cₘ⁺)
-    X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
-                          + cₘ⁺[m]*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
-  end
-  X
-end
-
 ############################################
 # Finite depth model with grounding line
 ############################################
@@ -147,6 +127,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
   HH = ndp.geo[2]
   d = γ*𝑙
   Aₚ = g/(1im*ω)
+  xg = ndp.geo[4]
 
   k = dispersion_free_surface(α, N, HH)
   κ = dispersion_elastic_surface(α, 1., γ, N+2, HH-γ)
@@ -160,7 +141,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
   end
 
   χ = (0:N)*(π/(HH-γ))
-  λ = k; λ[1] = -k[1]
+  λ = k; λ[1] = k[1]
 
   D1 = zeros(ComplexF64, N+1, N+3)
   D2 = zeros(ComplexF64, N+1, N+1)
@@ -178,27 +159,37 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
 
   A = diagm(vec(0.5*(cos.(k*HH).*sin.(k*HH) + k*HH)./(k.*(cos.(k*HH)).^2)))
 
-  B1 = hcat(-D1, -D1.*transpose(repeat(exp.(-κ*LL), 1, N+1)))
-  B2 = hcat(D3.*transpose(repeat(κ, 1, N+1)), D3.*transpose(repeat(-κ.*exp.(-κ*LL), 1, N+1)))
-  B3 = hcat(D1.*transpose(repeat(κ.*exp.(-κ*LL), 1, N+1)), -D1.*transpose(repeat((κ), 1, N+1)))
+  B1 = hcat(-D1, -D1.*transpose(repeat(exp.(-κ*xg), 1, N+1)))
+  B2 = hcat(D3.*transpose(repeat(κ, 1, N+1)), D3.*transpose(repeat(-κ.*exp.(-κ*xg), 1, N+1)))
+  B3 = hcat(D1.*transpose(repeat(κ.*exp.(-κ*xg), 1, N+1)), -D1.*transpose(repeat((κ), 1, N+1)))
 
-  B4 = zeros(ComplexF64, N+1, 4)
-  if(ptype==FreeClamped)
-    B4 = transpose(hcat(-κ.*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                        (κ.^2).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                        -(κ.^3).*tan.(κ*(HH-γ)),
-                        (κ.^4).*tan.(κ*(HH-γ))))
+
+  # Solve the beam-fluid dispersion equation
+  pl = Polynomial([α/(HH-γ), 0, 1-γ*α, 0, 0, 0, 1])
+  m = roots(pl)
+  m = m[sortperm(real(m), rev=true)]
+  # Solve the beam-bedrock equation
+  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
+  p = roots(pl)
+  p₁ = 0; p₂ = 0
+  if(real(𝑘^4 - γ*α) > 0)
+    p₁ = p[(real(p) .> 1e-9)][1]
+    p₂ = p[(real(p) .> 1e-9)][2]
   else
-    B4 = transpose(hcat(-κ.*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                        -(κ.^3).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
-                        -(κ.^3).*tan.(κ*(HH-γ)),
-                        (κ.^4).*tan.(κ*(HH-γ))))
+    p₁ = p[abs.(real(p)) .< 1e-9][1]
+    p₂ = p[abs.(real(p)) .< 1e-9][2]
   end
 
-  B5 = transpose(hcat(-κ.*tan.(κ*(HH-γ)),
-                      -(κ.^2).*tan.(κ*(HH-γ)),
-                      -(κ.^3).*tan.(κ*(HH-γ)).*exp.(-κ*LL),
-                      -(κ.^4).*tan.(κ*(HH-γ)).*exp.(-κ*LL)))
+  p₁ = -p₁
+  p₂ = -p₂
+  B4 = transpose(hcat((-κ.^3 - p₁*p₂*κ - (p₁+p₂)*κ.^2).*tan.(κ*(HH-γ)).*exp.(-κ*xg),
+                      (κ.^4 - p₁*p₂*(p₁+p₂)*κ - (p₁^2+p₂^2+p₁*p₂)*κ.^2).*tan.(κ*(HH-γ)).*exp.(-κ*xg),
+                      -(κ.^3).*tan.(κ*(HH-γ)),
+                      (κ.^4).*tan.(κ*(HH-γ))))
+  B5 = transpose(hcat((-κ.^3 - p₁*p₂*κ + (p₁+p₂)*κ.^2).*tan.(κ*(HH-γ)),
+                      (-κ.^4 - p₁*p₂*(p₁+p₂)*κ + (p₁^2+p₂^2+p₁*p₂)*κ.^2).*tan.(κ*(HH-γ)),
+                      -(κ.^3).*tan.(κ*(HH-γ)).*exp.(-κ*xg),
+                      -(κ.^4).*tan.(κ*(HH-γ)).*exp.(-κ*xg)))
 
   f1 = -Aₚ*D2[:,1]
   f2 = zeros(ComplexF64, N+1, 1)
@@ -214,8 +205,162 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
   sol = LHS\RHS
   aₘ = sol[1:N+1]
   cₘ = sol[N+2:end]
-  cₘ⁺ = cₘ[1:N+3]
-  cₘ⁻ = cₘ[N+4:2N+6]
-  FiniteDepthSolution(aₘ, cₘ⁺, cₘ⁻, vec(k), κ, vec(zeros(ComplexF64,2,1)),
-                      vec(zeros(ComplexF64,2,1)), ndp, ptype)
+  cₘ⁻ = cₘ[1:N+3]
+  cₘ⁺ = cₘ[N+4:2N+6]
+
+  # Find the coefficients of the bedrock part
+  fd = FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), κ, vec(zeros(ComplexF64,2,1)),
+                           vec(zeros(ComplexF64,2,1)), ndp, FreeBedrock())
+  ηg = u₁(xg, fd)
+  ∂ₓηg = ∂ₓu₁(xg, fd)
+  A = [1 1; p₁ p₂]
+  f = [ηg, ∂ₓηg]
+  b = A\f
+  FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), κ, -[p₁, p₂],
+                      vec(b), ndp, FreeBedrock())
+end
+
+function u₁(x, sol::FiniteDepthSolution)
+  α = sol.ndp.α
+  g = sol.ndp.geo[end]
+  𝑙 = sol.ndp.𝑙
+  ω = √(α*g/𝑙)
+  cₘ⁺ = sol.cₘ⁺
+  cₘ⁻ = sol.cₘ⁻
+  LL = sol.ndp.geo[1]
+  HH = sol.ndp.geo[2]
+  γ = sol.ndp.γ
+  κ = sol.κₘ
+  xg = sol.ndp.geo[4]
+
+  X = 0*x
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  elseif(sol.BeamType isa FreeBedrock)
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*exp.(κ[m]*(x .- xg))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  end
+  X
+end
+function u₂(x, sol::FiniteDepthSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  @assert length(p) == length(b)
+  b[1]*exp.(-p[1]*(x .-xg)) + b[2]*exp.(-p[2]*(x .-xg))
+end
+######################################################
+# Slope, Bending moment, Shear force
+######################################################
+function ∂ₓu₁(x, sol::FiniteDepthSolution)
+  α = sol.ndp.α
+  g = sol.ndp.geo[end]
+  𝑙 = sol.ndp.𝑙
+  ω = √(α*g/𝑙)
+  cₘ⁺ = sol.cₘ⁺
+  cₘ⁻ = sol.cₘ⁻
+  LL = sol.ndp.geo[1]
+  HH = sol.ndp.geo[2]
+  γ = sol.ndp.γ
+  κ = sol.κₘ
+  xg = sol.ndp.geo[4]
+
+  X = 0*x
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  elseif(sol.BeamType isa FreeBedrock)
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])*exp.(κ[m]*(x .- xg))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  end
+  X
+end
+function ∂ₓu₂(x, sol::FiniteDepthSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  @assert length(p) == length(b)
+  (-p[1]*b[1]*exp.(-p[1]*(x .-xg))
+   -p[2]*b[2]*exp.(-p[2]*(x .-xg)))
+end
+function ∂ₓ²u₁(x, sol::FiniteDepthSolution)
+  α = sol.ndp.α
+  g = sol.ndp.geo[end]
+  𝑙 = sol.ndp.𝑙
+  ω = √(α*g/𝑙)
+  cₘ⁺ = sol.cₘ⁺
+  cₘ⁻ = sol.cₘ⁻
+  LL = sol.ndp.geo[1]
+  HH = sol.ndp.geo[2]
+  γ = sol.ndp.γ
+  κ = sol.κₘ
+  xg = sol.ndp.geo[4]
+
+  X = 0*x
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^2*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])^2*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  elseif(sol.BeamType isa FreeBedrock)
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^2*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])^2*exp.(κ[m]*(x .- xg))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  end
+  X
+end
+function ∂ₓ²u₂(x, sol::FiniteDepthSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  xg = sol.ndp.geo[4]
+  @assert length(p) == length(b)
+  ((-p[1])^2*b[1]*exp.(-p[1]*(x .-xg)) +
+   (-p[2])^2*b[2]*exp.(-p[2]*(x .-xg)))
+end
+function ∂ₓ³u₁(x, sol::FiniteDepthSolution)
+  α = sol.ndp.α
+  g = sol.ndp.geo[end]
+  𝑙 = sol.ndp.𝑙
+  ω = √(α*g/𝑙)
+  cₘ⁺ = sol.cₘ⁺
+  cₘ⁻ = sol.cₘ⁻
+  LL = sol.ndp.geo[1]
+  HH = sol.ndp.geo[2]
+  γ = sol.ndp.γ
+  κ = sol.κₘ
+  xg = sol.ndp.geo[4]
+
+  X = 0*x
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^3*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])^3*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  elseif(sol.BeamType isa FreeBedrock)
+    for m in 1:length(cₘ⁺)
+      X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^3*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
+                            + cₘ⁺[m]*(κ[m])^3*exp.(κ[m]*(x .- xg))*(-κ[m]*tan(κ[m]*(HH-γ))))
+    end
+  end
+  X
+end
+function ∂ₓ³u₂(x, sol::FiniteDepthSolution)
+  xg = sol.ndp.geo[4]
+  p = sol.p
+  b = sol.b
+  xg = sol.ndp.geo[4]
+  @assert length(p) == length(b)
+  ((-p[1])^3*b[1]*exp.(-p[1]*(x .-xg)) +
+   (-p[2])^3*b[2]*exp.(-p[2]*(x .-xg)))
 end

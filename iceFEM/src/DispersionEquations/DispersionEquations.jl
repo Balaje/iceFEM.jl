@@ -1,5 +1,9 @@
 module DispersionEquations
 
+using Polynomials
+using Roots
+using LinearAlgebra
+
 # Import
 import iceFEM.NonDimProblem: Ice, Fluid
 import iceFEM.NonDimProblem: NonDimensionalProblem, non_dimensionalize
