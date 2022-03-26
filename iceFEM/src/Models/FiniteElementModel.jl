@@ -1,77 +1,6 @@
 ##############################################
 # Begin file containing the FEM part
 ##############################################
-
-# 1) Dispersion equation of the composite beam
-function dispersion_composite_beam(beta, ndp::NonDimensionalProblem)
-  α = ndp.α
-  γ = ndp.γ
-  𝑘 = ndp.𝑘
-  xg = ndp.geo[4]
-
-  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
-  p = roots(pl)
-  p1 = 0; p2 = 0;
-  if(real(𝑘^4 - γ*α) > 0)
-    p1 = p[(real(p) .< 1e-9)][1]
-    p2 = p[(real(p) .< 1e-9)][2]
-  else
-    p1 = p[abs.(real(p)) .< 1e-9][1]
-    p2 = p[abs.(real(p)) .< 1e-9][2]
-  end
-
-  real( (2*beta^5 - 2*beta^5*cos(beta*xg)*cosh(beta*xg) + 2*beta*p1^2*p2^2
-         - 2*beta^3*p1^2*sin(beta*xg)*sinh(beta*xg)
-         - 2*beta^3*p2^2*sin(beta*xg)*sinh(beta*xg)
-         + 2*beta^4*p1*cos(beta*xg)*sinh(beta*xg)
-         + 2*beta^4*p1*cosh(beta*xg)*sin(beta*xg)
-         + 2*beta^4*p2*cos(beta*xg)*sinh(beta*xg)
-         + 2*beta^4*p2*cosh(beta*xg)*sin(beta*xg)
-         - 4*beta^3*p1*p2*sin(beta*xg)*sinh(beta*xg)
-         + 2*beta*p1^2*p2^2*cos(beta*xg)*cosh(beta*xg)
-         - 2*beta^2*p1*p2^2*cos(beta*xg)*sinh(beta*xg)
-         + 2*beta^2*p1*p2^2*cosh(beta*xg)*sin(beta*xg)
-         - 2*beta^2*p1^2*p2*cos(beta*xg)*sinh(beta*xg)
-         + 2*beta^2*p1^2*p2*cosh(beta*xg)*sin(beta*xg))
-        /(cosh(beta*xg)*p1^2*p2^2) )
-end
-
-#######################################################
-# Functions to solve the beam dispersion equations
-#######################################################
-function _get_roots(N, L, f::Function)
-  rr=zeros(N,1)
-  xbar=π/(2*L)
-  count=1
-  while(1>=0)
-    error=1
-    tol=1e-8
-    r=find_zero(f,xbar)
-    if(abs(r-rr[count])>tol)
-      rr[count]=r
-      count+=1
-    end
-    xbar=(count-0.5)*π/L
-    if(count==N+1)
-      break
-    end
-  end
-  rr
-end
-function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeBedrock)
-  xg = ndp.geo[4]
-  _get_roots(N, xg, x->dispersion_composite_beam(x, ndp))
-end
-function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeClamped)
-  L = ndp.geo[4]
-  f(x) = cos(x*L) + 1/cosh(x*L)
-  _get_roots(N, L, f)
-end
-function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeHinged)
-  L = ndp.geo[4]
-  f(x) = cos(x*L)*tanh(x*L) - sin(x*L)
-  _get_roots(N, L, f)
-end
 ########################################################
 # Functions to obtain the mode shapes of the beam
 ########################################################
@@ -117,7 +46,7 @@ function ηₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeBedrock)
 end
 function ξₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeBedrock)
   xg = ndp.geo[4]
-  c, p, _ = ηₖ(xg, β, ndp)
+  c, p, _ = ηₖ(xg, β, ndp, FreeBedrock())
   ηg = (c[1]*sinh(β*xg) + c[2]*cosh(β*xg) + c[3]*sin(β*xg) + c[4]*cos(β*xg))*(1/(c[2]+c[4]))
   ∂ₓηg = (c[1]*β*cosh(β*xg) + c[2]*β*sinh(β*xg) + c[3]*β*cos(β*xg) - c[4]*β*sin(β*xg))*(1/(c[2]+c[4]))
   A = [1 1; p[1] p[2]]
@@ -164,7 +93,7 @@ function _plot_compare_dispersion_equation(sol₁::Union{ShallowWaterSolution, F
   fbetaₛ = zeros(ComplexF64,length(betaₛ),1)
   𝑘 = sol₁.ndp.𝑘
   for m=1:length(betaₛ)
-    fbetaₛ[m] = dispersion_composite_beam(betaₛ[m], ndp)
+    fbetaₛ[m] = _dispersion_composite_beam(betaₛ[m], ndp)
   end
   plt = plot(betaₛ, real.(fbetaₛ), label="Composite beam", color=:green)
   # Plot the dispersion equation of the clamped beam
@@ -181,6 +110,8 @@ function _plot_invacuo_ice_eb(ndp::NonDimensionalProblem, modeNo::Int64)
   𝑘 = ndp.𝑘
   γ = ndp.γ
   α = ndp.α
+  xg = ndp.geo[4]
+  LL = ndp.geo[1]
   # Bedrock problem
   βₛ = solve_eigen_eb(10, ndp, FreeBedrock())
   β = real(βₛ[modeNo])

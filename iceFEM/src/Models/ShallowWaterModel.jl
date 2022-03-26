@@ -1,5 +1,3 @@
-using Polynomials
-using Roots
 import Roots: solve
 
 struct ShallowWater end

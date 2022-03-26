@@ -1,7 +1,3 @@
-using Polynomials
-using Roots
-using LinearAlgebra
-
 function dispersion_elastic_surface(alpha, beta, gamma, N, h)
   alpha = alpha*h
   beta = beta/h^4

@@ -1,6 +1,4 @@
-using Roots
 import Roots: solve
-using LinearAlgebra
 
 struct FiniteDepth
   N::Int64

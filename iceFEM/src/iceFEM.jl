@@ -1,11 +1,10 @@
 module iceFEM
 
-import Polynomials
-import Plots
-import LaTeXStrings
-import LinearAlgebra
-import Roots
-
+using Polynomials
+using Plots
+using LaTeXStrings
+using LinearAlgebra
+using Roots
 
 include("./NonDimensionalProblem/NonDimensionalProblem.jl")
 include("./DispersionEquations/DispersionEquations.jl")
@@ -17,16 +16,21 @@ using iceFEM.NonDimProblem: FreeBedrock, FreeClamped, FreeHinged
 using iceFEM.NonDimProblem: non_dimensionalize
 
 using iceFEM.DispersionEquations: dispersion_elastic_surface, dispersion_free_surface
+using iceFEM.DispersionEquations: solve_eigen_eb
 
 using iceFEM.Models: ShallowWater, ShallowWaterSolution, solve
+using iceFEM.Models: u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
+using iceFEM.Models: u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
 using iceFEM.Models: FiniteDepth, FiniteDepthSolution
 
 
 export Ice, Fluid, NonDimensionalProblem
 export FreeBedrock, FreeClamped, FreeHinged
 export non_dimensionalize
-export dispersion_free_surface, dispersion_elastic_surface
+export dispersion_free_surface, dispersion_elastic_surface, solve_eigen_eb
 export ShallowWater, ShallowWaterSolution, solve
 export FiniteDepth, FiniteDepthSolution
+export u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
+export u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
 
 end # module
