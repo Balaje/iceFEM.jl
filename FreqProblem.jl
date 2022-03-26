@@ -106,23 +106,23 @@ plt = plot(p1,p2,layout=(2,1))
 ############################################################
 # Eg 3: u(x₀) (Grounding Line disp.) vs k₀ (Spring Const.)
 ############################################################
-k₀ₛ = 10 .^LinRange(6,9,100)
+k₀ₛ = 10 .^LinRange(4,12,100)
 uₓ₀ₛ = zeros(length(k₀ₛ), 1)
 ∂ₓuₓ₀ₛ = zeros(length(k₀ₛ), 1)
 p1 = plot()
 p2 = plot()
+
 p3 = plot()
 p4 = plot()
-p5 = plot()
-p6 = plot()
+# p5 = plot()
+# p6 = plot()
 
 ω = 2π/200
 
 𝐴s = zeros(ComplexF64, length(k₀ₛ), 1)
 𝐵s = zeros(ComplexF64, length(k₀ₛ), 1)
-𝐶s = zeros(ComplexF64, length(k₀ₛ), 1)
 
-for th in [200,500]
+for th in 200
   for i = 1:length(k₀ₛ)
     ic = Ice(ρᵢ, Eᵢ, ν, L, th)
     fl = Fluid(ρₒ, k₀ₛ[i], g, H, x₀)
@@ -130,17 +130,16 @@ for th in [200,500]
     uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol))
     ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol))
 
-    𝐴s[i] = (-sol.p[1])*(-sol.p[2])
-    𝐵s[i] = (-sol.p[1] + -sol.p[2])
-    𝐶s[i] = ( (-sol.p[1])^2 + (-sol.p[1])*(-sol.p[2]) + (-sol.p[2])^2 )
+    r₁ = -sol.p[1]; r₂ = -sol.p[2];
+    𝐴s[i] = abs(1/(r₁*r₂))
+    𝐵s[i] = abs((r₁ + r₂)/(r₁*r₂))
+
   end
   plot!(p1, k₀ₛ, uₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
   plot!(p2, k₀ₛ, ∂ₓuₓ₀ₛ, label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
 
-  plot!(p3, k₀ₛ/10^6, -real(𝐴s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
-  plot!(p4, k₀ₛ/10^6, real(𝐵s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
-  plot!(p5, k₀ₛ/10^6, real(𝐴s.*𝐵s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
-  plot!(p6, k₀ₛ/10^6, real(𝐶s), label="\$h = \$ "*string(round(th, digits=4))*" \$m\$")
+  plot!(p3, k₀ₛ/10^6, abs.(𝐴s), xaxis=:log, legend = false, yguidefontsize=6)
+  plot!(p4, k₀ₛ/10^6, abs.(𝐵s), xaxis=:log, legend = false, yguidefontsize=6)
 end
 xlabel!(p1, "\$k_0\$ (Nm\$^{-3}\$)")
 ylabel!(p1, "\$|u(x_g)|\$")
@@ -148,16 +147,13 @@ ylabel!(p2, "\$|\\partial_x u(x_g)|\$")
 
 xlabel!(p3, "\$k_0\$ (MPa/m)")
 xlabel!(p4, "\$k_0\$ (MPa/m)")
-xlabel!(p5, "\$k_0\$ (MPa/m)")
-xlabel!(p6, "\$k_0\$ (MPa/m)")
 
-ylabel!(p3, "\$-p_1p_2\$")
-ylabel!(p4, "\$p_1 + p_2\$")
-ylabel!(p5, "\$p_1p_2 (p_1 + p_2)\$")
-ylabel!(p6, "\$p_1^2 + p_1p_2 + p_2^2\$")
+
+ylabel!(p3, "\$\\left|\\frac{1}{p_1p_2}\\right|\$")
+ylabel!(p4, "\$\\left|\\frac{p_1+p_2}{p_1p_2}\\right|\$")
 
 plt = plot(p1,p2,layout=(2,1))
-plt1 = plot(p3,p4,p5,p6,layout=(2,2))
+plt1 = plot(p3,p4,layout=(2,1))
 title!(plt, "Wave Period \$ T = "*string(round(2π/ω, digits=4))*"\$ s")
 #display(plt); #readline()
 #savefig(plt, "Example5.pdf")
