@@ -2,7 +2,6 @@ module Models
 
 using Polynomials
 using LinearAlgebra
-using Plots
 
 # Export
 export ShallowWater, ShallowWaterSolution
