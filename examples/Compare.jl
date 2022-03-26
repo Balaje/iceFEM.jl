@@ -1,4 +1,5 @@
-include("ShallowWaterModel.jl")
+using iceFEM
+using Plots
 
 ##################################################
 # Ice-shelf and fluid/bedrock parameters
@@ -15,7 +16,7 @@ g = 9.8
 H = 500
 fluid = Fluid(ρₒ, 0, g, H, 0) # Set the bedrock parameters = 0
 
-ω = 2π/8000
+ω = 2π/80
 #################################################
 # Eg 1: Solve one frequency domain problem for clamped ice-shelf
 #################################################
@@ -28,10 +29,10 @@ Aₚ = g/(1im*ω)
 LL = sol.ndp.geo[1]
 x₁ = 0:0.05:LL
 U₁ = u₁(x₁, sol)
-p1 = plot(x₁, abs.(U₁), legend=false)
-xlabel!(p1, "\$x\$ (Non-Dim)")
-ylabel!(p1, "\$|u|\$ (in m)")
-title!(p1, "Clamped \$x = L\$, Wave Period = \$"*string(round(2π/ω, digits=4))*"\$ s")
+plt_1 = plot(x₁, abs.(U₁), legend=false)
+xlabel!(plt_1, "\$x\$ (Non-Dim)")
+ylabel!(plt_1, "\$|u|\$ (in m)")
+title!(plt_1, "Clamped \$x = L\$, Wave Period = \$"*string(round(2π/ω, digits=4))*"\$ s")
 
 #################################################
 # Eg 1: Solve one frequency domain problem for hinged ice-shelf
@@ -44,10 +45,10 @@ Aₚ = g/(1im*ω)
 LL = sol.ndp.geo[1]
 x₁ = 0:0.05:LL
 U₁ = u₁(x₁, sol)
-p2 = plot(x₁, abs.(U₁), legend=false)
-xlabel!(p2, "\$x\$ (Non-Dim)")
-ylabel!(p2, "\$|u|\$ (in m)")
-title!(p2, "Hinged \$x = L\$")
+plt_2 = plot(x₁, abs.(U₁), legend=false)
+xlabel!(plt_2, "\$x\$ (Non-Dim)")
+ylabel!(plt_2, "\$|u|\$ (in m)")
+title!(plt_2, "Hinged \$x = L\$")
 
 #################################################
 # Eg 3: Solve one frequency domain problem for bedrock ice-shelf
@@ -69,12 +70,11 @@ x₁ = 0:0.01:xg
 x₂ = xg:0.01:LL
 U₁ = u₁(x₁, sol)
 U₂ = u₂(x₂, sol)
-p3 = plot(x₁, abs.(U₁), label="\$x < x_g\$")
-plot!(p3, x₂, abs.(U₂), label="\$ x > x_g\$")
-xlabel!(p3, "\$x\$ (Non-Dim)")
-ylabel!(p3, "\$|u|\$ (in m)")
-title!(p3, "Displacement profiles for \$k_0 = "*string(k₀)*"\$ Nm\$^{-3}\$")
+plt_3 = plot(x₁, abs.(U₁), label="\$x < x_g\$")
+plot!(plt_3, x₂, abs.(U₂), label="\$ x > x_g\$")
+xlabel!(plt_3, "\$x\$ (Non-Dim)")
+ylabel!(plt_3, "\$|u|\$ (in m)")
+title!(plt_3, "Displacement profiles for \$k_0 = "*string(k₀)*"\$ Nm\$^{-3}\$")
 
-plt = plot(p1, p2, p3, layout=(3,1))
+plt = plot(plt_1, plt_2, plt_3, layout=(3,1))
 display(plt)
-savefig(plt, "Example4.pdf")

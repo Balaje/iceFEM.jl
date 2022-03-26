@@ -1,4 +1,5 @@
-include("FiniteDepthModel.jl")
+using iceFEM
+using Plots
 
 ##################################################
 # Ice-shelf and fluid/bedrock parameters
@@ -13,13 +14,13 @@ ice = Ice(ρᵢ, Eᵢ, ν, L, h)
 g = 9.8
 H = 500
 fluid = Fluid(ρₒ, 0, g, H, 0) # Set the bedrock parameters = 0
-ω = 2π/50
+ω = 2π/500
 
 #############################################################################
 # Eg 1: Solve and compare finite depth solution  to shallow water solution  #
 #############################################################################
-BeamType = FreeHinged()
-NModes = 4
+BeamType = FreeClamped()
+NModes = 3
 fd = FiniteDepth(NModes)
 solϕ = solve(ice, fluid, ω, BeamType, fd)
 # Check the reflection coeffcients
@@ -31,9 +32,9 @@ solSW = solve(ice, fluid, ω, BeamType, ShallowWater())
 x = 0:0.01:solϕ.ndp.geo[1]
 Uϕ = u₁(x, solϕ)
 USW = u₁(x, solSW)
-p₁ = plot(x, abs.(Uϕ), label="Finite depth")
-plot!(x, abs.(USW), label="Shallow water")
-xlabel!(p₁, "\$x\$ (Non-Dim)")
-ylabel!(p₁, "\$|u|\$ (in m)")
-title!(p₁, "Clamped \$x = L\$, Wave Period = \$"*string(round(2π/ω, digits=4))*"\$ s")
-display(p₁)
+plt = plot(x, abs.(Uϕ), label="Finite depth")
+plot!(plt, x, abs.(USW), label="Shallow water")
+xlabel!(plt, "\$x\$ (Non-Dim)")
+ylabel!(plt, "\$|u|\$ (in m)")
+title!(plt, "Clamped \$x = L\$, Wave Period = \$"*string(round(2π/ω, digits=4))*"\$ s")
+display(plt)
