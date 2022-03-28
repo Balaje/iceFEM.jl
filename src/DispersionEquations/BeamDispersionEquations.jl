@@ -43,6 +43,7 @@ function _get_roots(N, L, f::Function)
     error=1
     tol=1e-8
     r=find_zero(f,xbar)
+    #display(abs(r-rr[count]))
     if(abs(r-rr[count])>tol)
       rr[count]=r
       count+=1
@@ -59,12 +60,12 @@ function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeBedrock)
   _get_roots(N, xg, x->_dispersion_composite_beam(x, ndp))
 end
 function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeClamped)
-  L = ndp.geo[4]
+  L = ndp.geo[1]
   f(x) = cos(x*L) + 1/cosh(x*L)
   _get_roots(N, L, f)
 end
 function solve_eigen_eb(N, ndp::NonDimensionalProblem, ::FreeHinged)
-  L = ndp.geo[4]
+  L = ndp.geo[1]
   f(x) = cos(x*L)*tanh(x*L) - sin(x*L)
   _get_roots(N, L, f)
 end

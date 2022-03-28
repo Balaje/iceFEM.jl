@@ -2,6 +2,7 @@ module Models
 
 using Polynomials
 using LinearAlgebra
+using Gridap
 
 # Export
 export ShallowWater, ShallowWaterSolution
@@ -11,6 +12,8 @@ export ∂ₓ²u₁, ∂ₓ²u₂
 export ∂ₓ³u₁, ∂ₓ³u₂
 
 export FiniteDepth, FiniteDepthSolution
+
+export FiniteElementModel, FiniteDepthFEM
 
 export ηₖ, ξₖ
 
