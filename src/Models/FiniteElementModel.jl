@@ -135,6 +135,7 @@ function FiniteDepthFEM(ice::Ice, fluid::Fluid, ω, dim::Int64, partition::Tuple
 end
 
 include("fem_solve.jl")
+include("ref_coeff.jl")
 
 function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
   ndp = non_dimensionalize(ice, fluid, ω)
@@ -175,7 +176,12 @@ function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; v
   λ, K, B, AB, F = _build_reduced_system(μ, ϕ₀, ϕₖ, ndp, Γ₃,
                                          fem.fespace, ptype, 0)
 
-  FiniteElementSolution(ϕ₀ʰ, ϕₖʰ, vec(λ), (K, B, AB, F), ndp, ptype)
+  ϕ = ϕ₀ + ϕₖ*λ
+
+  ϕʰ = FEFunction(fem.fespace, vec(ϕ))
+  Ref = get_ref_coeff(ϕʰ, NModes, k, kd, HH, γ, Γ₄, Aₚ, exp.(0*kd))
+
+  FiniteElementSolution(ϕ₀ʰ, ϕₖʰ, vec(λ), (K, B, AB, F, Ref), ndp, ptype)
 end
 
 function u₁(x, fes::FiniteElementSolution)
