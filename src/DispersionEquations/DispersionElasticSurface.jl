@@ -27,7 +27,8 @@ function RTS_ice_roots(del, H, N)
     if(del ≥ 0)
       nc = 1
     elseif nc!=round(nc)
-      nc = round(nc .+ 5)
+      nc = round(nc + 0.5)
+      nc = Int(abs(nc))
     end
 
     if nc <= N ## Get Easy imaginary roots
@@ -45,24 +46,25 @@ function RTS_ice_roots(del, H, N)
       K[jj.+3] = 1im*w/H
     else
       i1 = nc*π; i0 = i1-π
-      K[nc.+3],_ = 1im/H*RTS_imag_root_ice(del, H, i0-tol, i1+tol)
+
+      K[nc.+3],_ = 1im/H*RTS_imag_root_ice(del, H, i0-tol, i1+tol)[1]
     end
 
     ## Get more difficult imaginary roots
     for j=1:min(N,nc-1)
       i0=(j-1)*pi; i1=i0+pi/2;
       w,_=RTS_imag_root_ice(del,H,i0,i1);
-      K[j+3]=i*w/H;
+      K[j+3]=1im*w/H;
     end
     guess1 = ((real(Kgs) .> 0) .& (imag(Kgs) .> 0))⋅Kgs
     k,_ = gen_root_ice(del, H, guess1)
     tol = 1e-8
     k_cx, k_im = is_complex(k, K[nc+3], nc*π, H)
     if((k_cx .== 0) .& (k_im .== 0))
-      K,_ = complex_roots(del, H, K, nc)
+      K = complex_roots(del, H, K, nc)
     elseif k_cx .== 0
       K[3] = k_im;
-      K,_ = complex_roots(del, H, K, nc)
+      K = complex_roots(del, H, K, nc)
     else
       K[2] = k_cx;
       K[3] = -K[2]'
@@ -115,7 +117,7 @@ function is_complex(k, vargs...)
     k = 1im*sign(imag(k))*imag(k)
     Z = vargs; Kc = Z[1]; i1=Z[2]; H=Z[3]
     i0 = i1-π; w = imag(k)*H
-    if(abs(k-Kc) > tol/H & (w-i0+tol)*(i1+tol-w) > 0)
+    if((abs(k-Kc) > tol/H) & ((w-i0+tol)*(i1+tol-w) > 0))
       y_im = k
     end
   end
@@ -129,9 +131,11 @@ function complex_roots(del, H, K, nc)
   w = imag(k)*H
   p,dp = p_fxn(w, del, H)
 
+  H3, del3, w3 = triple_root(nc)
+
   if(K[3]!=0)
     k_1 = K[3]; w_1 = imag(k_1)*H;
-    p,dp_1 = f_fxn(w_1, del, H)
+    p,dp_1 = p_fxn(w_1, del, H)
     req23 = 0
     if w > w_1
       W = w; dP = dp; W_1 = w_1; dP_1 = dp_1
@@ -140,28 +144,27 @@ function complex_roots(del, H, K, nc)
     end
     if dp*dp_1 > 0
       i0 = W_1 + tol; i1 = W - tol;
-      w_2 = RTS_imag_root_ice(del, H, i0, i1); K[2] = 1im*w_2/H
+      w_2 = RTS_imag_root_ice(del, H, i0, i1)[1]; K[2] = 1im*w_2/H
     elseif dP*(-1)^nc < 0
       i0 = W + tol; i1 = I1
-      w_2 = RTS_imag_root_ice(del, H, i0, i1); K[2] = 1im*w_2/H
+      w_2 = RTS_imag_root_ice(del, H, i0, i1)[1]; K[2] = 1im*w_2/H
     else
       i0 = I0; i1 = W_1 - tol;
-      w_2 = RTS_imag_root_ice(del, H, i0, i1); K[2] = 1im*w_2/H
+      w_2 = RTS_imag_root_ice(del, H, i0, i1)[1]; K[2] = 1im*w_2/H
     end
   elseif dp*(-1)^nc<0
     i0 = I0; i1 = w-tol; req23=0;
-    _w = RTS_imag_root_ice(del, H, i0, i1); K[3] = 1im*_w/H
+    _w = RTS_imag_root_ice(del, H, i0, i1)[1]; K[3] = 1im*_w/H
     i0 = w+tol; i1 = I1
-    _w = RTS_imag_root_ice(del, H, i0, i1); K[2] = 1im*_w/H
+    _w = RTS_imag_root_ice(del, H, i0, i1)[1]; K[2] = 1im*_w/H
   else
-    H3, del3, w3 = triple_root(nc)
     if (abs(H-H3)<tol) & (abs(del-del3) < tol)
       K[2:3] = k; req23=0;
     end
   end
 
+  w20,del20,w21,del21=double_roots(H,nc,H3,del3,w3);
   if req23==1
-    w20,del20,w21,del21=double_roots(H,nc,H3,del3,w3);
     if abs(del-del20)<tol
       K[2:3]=1im*w20/H; req23=0;
     elseif abs(del-del21)<tol
@@ -209,11 +212,11 @@ function complex_roots(del, H, K, nc)
   end
 
   if req23==0
-    j=2:nc+3; w=sort(imag(K[j])); K[j]=i*w;
+    j=2:nc+3; w=sort(imag(K[j])); K[j]=1im*w;
   end
 
-  if (req23==1) & (nc==1) & (del<del20) & (del>-1/3/(2*H)^(2/3));
-    w=roots(Polynomial([-1, del*H^(2/3), 0, 1])); k0=sqrt.(w*H^(1/3));
+  if ((req23==1) & (nc==1) & (del<del20) & (del>-1/3/(2*H)^(2/3)))
+    w=roots(Polynomial([-1, del*H^(2/3), 0, 1])); k0=sqrt.(w*H^(1/3))
     k0=k0[findall(imag(k0) .> 0)];
     k,_=gen_root_ice(del,H,k0); k=is_complex(k);
     if k!=0
@@ -378,7 +381,7 @@ function RTS_imag_root_ice(del, H, i0, i1)
   Lam=x4+del*H4;
   fh=Lam*i1*sin(i1)+H4*H*cos(i1);
 
-  if (((fl > 0) & (fh > 0)) | ((fl < 0) & (fh < 0) ))
+  if (((abs(fh) > 0) & (abs(fh) > 0)) | ((abs(fl) < 0) & (abs(fh) < 0) ))
     x=0;
     exitflag=0;
     return x, exitflag
