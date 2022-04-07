@@ -1,4 +1,4 @@
-include("Input.jl")
+import Roots: solve
 
 struct ShallowWater end
 struct ShallowWaterSolution
@@ -15,7 +15,7 @@ end
 # Default option is to solve the ice-shelf problem using the FreeClamped() condition
 #######################################################################################
 function solve(Ice::Ice, Fluid::Fluid, ω)
-  solve(Ice, Fluid, ω, FreeClamped())
+  solve(Ice, Fluid, ω, FreeClamped(), ShallowWater())
 end
 
 function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}, ::ShallowWater)

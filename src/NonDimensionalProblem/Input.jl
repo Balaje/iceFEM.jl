@@ -1,9 +1,3 @@
-using Pkg
-# Pkg.add("Polynomials")
-using Polynomials
-using Plots
-using LaTeXStrings
-
 struct Ice <: Any
   ρᵢ::Float64
   Eᵢ::Float64
