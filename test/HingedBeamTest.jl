@@ -24,23 +24,23 @@ end
 
 @testset verbose = true "Checking whether the free conditions are satisfied at x=0" begin
   @testset "Shallow water..." begin
-    @test abs(∂ₓ²u₁(0, sol_sw)) ≤ 1e-12
-    @test abs(∂ₓ³u₁(0, sol_sw)) ≤ 1e-12
+    @test abs.(∂ₓ²u₁(0, sol_sw))[1] ≤ 1e-12
+    @test abs.(∂ₓ³u₁(0, sol_sw))[1] ≤ 1e-12
   end
   @testset "Finite Depth..." begin
-    @test abs(∂ₓ²u₁(0, sol_fd)) ≤ 1e-12
-    @test abs(∂ₓ³u₁(0, sol_fd)) ≤ 1e-12
+    @test abs.(∂ₓ²u₁(0, sol_fd))[1] ≤ 1e-12
+    @test abs.(∂ₓ³u₁(0, sol_fd))[1] ≤ 1e-12
   end
 end
 
 LL = sol_sw.ndp.geo[1]
 @testset verbose = true "Checking whether the hinged conditions are satisfied at x=L" begin
   @testset "Shallow water..." begin
-    @test abs(u₁(LL, sol_sw)) ≤ 1e-12
-    @test abs(∂ₓ²u₁(LL, sol_sw)) ≤ 1e-12
+    @test abs.(u₁(LL, sol_sw))[1] ≤ 1e-12
+    @test abs.(∂ₓ²u₁(LL, sol_sw))[1] ≤ 1e-12
   end
   @testset "Finite Depth..." begin
-    @test abs(u₁(LL, sol_fd)) ≤ 1e-12
-    @test abs(∂ₓ²u₁(LL, sol_fd)) ≤ 1e-12
+    @test abs.(u₁(LL, sol_fd))[1] ≤ 1e-12
+    @test abs.(∂ₓ²u₁(LL, sol_fd))[1] ≤ 1e-12
   end
 end

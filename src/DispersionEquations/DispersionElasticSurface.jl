@@ -15,7 +15,7 @@ end
 
 function RTS_ice_roots(del, H, N)
   # Get real root
-  Kgs = roots(Polynomial([-1, del, 0, 0, 0, 1]))
+  Kgs = roots([-1, del, 0, 0, 0, 1])
   guess0 = ((real(Kgs) .> 0) .& (imag(Kgs) .== 0))'*Kgs
   K0,_ =  gen_root_ice(del, H, guess0)
   K = K0
@@ -216,7 +216,8 @@ function complex_roots(del, H, K, nc)
   end
 
   if ((req23==1) & (nc==1) & (del<del20) & (del>-1/3/(2*H)^(2/3)))
-    w=roots(Polynomial([-1, del*H^(2/3), 0, 1])); k0=sqrt.(w*H^(1/3))
+    w=roots([-1, del*H^(2/3), 0, 1])
+    k0=sqrt.(w*H^(1/3))
     k0=k0[findall(imag(k0) .> 0)];
     k,_=gen_root_ice(del,H,k0); k=is_complex(k);
     if k!=0
@@ -226,14 +227,14 @@ function complex_roots(del, H, K, nc)
 
   if req23==1
     _H=H .+ 0.1;
-    r=roots(Polynomial([-1, del, 0, 0, 0, 1]));
+    r=roots([-1, del, 0, 0, 0, 1])
     gs=findall((real(r) .> 0) .& (imag(r) .> 0))
     gs = (length(gs) == 1) ? gs[1] : gs
     _k,df = gen_root_ice(del,_H,gs);
     _k,=is_complex(_k);
     while abs(_k)==0
       _H=_H .+ 0.1;
-      r=roots(Polynomial([-1, del, 0, 0, 0, 1]));
+      r=roots([-1, del, 0, 0, 0, 1])
       gs=findall((real(r) .> 0) .& (imag(r) .> 0))
       gs = (length(gs) == 1) ? gs[1] : gs
       _k,df=gen_root_ice(del,_H,gs);

@@ -1,5 +1,3 @@
-import Roots: solve
-
 struct FiniteDepth
   N::Int64
 end
@@ -165,12 +163,10 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
 
 
   # Solve the beam-fluid dispersion equation
-  pl = Polynomial([α/(HH-γ), 0, 1-γ*α, 0, 0, 0, 1])
-  m = roots(pl)
+  m = PolynomialRoots.roots([α/(HH-γ), 0, 1-γ*α, 0, 0, 0, 1])
   m = m[sortperm(real(m), rev=true)]
   # Solve the beam-bedrock equation
-  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
-  p = roots(pl)
+  p = PolynomialRoots.roots([𝑘^4 - γ*α, 0, 0, 0, 1])
   p₁ = 0; p₂ = 0
   if(real(𝑘^4 - γ*α) > 0)
     p₁ = p[(real(p) .> 1e-9)][1]

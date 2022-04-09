@@ -1,7 +1,6 @@
 module DispersionEquations
 
-using Polynomials
-using Roots
+using PolynomialRoots
 using LinearAlgebra
 
 # Import

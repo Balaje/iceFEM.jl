@@ -14,7 +14,7 @@ struct Fluid <: Any
   x₀::Float64
 end
 
-struct NonDimensionalProblem <: Any
+mutable struct NonDimensionalProblem <: Any
   𝑙::Float64
   𝑘::Float64
   γ::Float64
@@ -23,7 +23,11 @@ struct NonDimensionalProblem <: Any
   geo::Vector{Float64}
 end
 
-function non_dimensionalize(Ice::Ice, Fluid::Fluid, ω)
+function preallocate_matrices(::Type{NonDimensionalProblem})
+  NonDimensionalProblem(0, 0, 0, 0im, 0im, Vector{Float64}(undef,5))
+end
+
+function non_dimensionalize!(cache, Ice::Ice, Fluid::Fluid, ω)
   Eᵢ = Ice.Eᵢ
   ρᵢ = Ice.ρᵢ
   h = Ice.h
@@ -37,15 +41,25 @@ function non_dimensionalize(Ice::Ice, Fluid::Fluid, ω)
   x₀ = Fluid.x₀
 
   D = Eᵢ*h^3/(12*(1-ν^2))
-  𝑙 = (D/(ρₒ*g))^0.25
-  𝑘 = (k₀/(ρₒ*g))^0.25
-  γ = (ρᵢ/ρₒ)*(h/𝑙)
-  α = ω^2*(𝑙/g)
+  cache.𝑙 = (D/(ρₒ*g))^0.25
+  cache.𝑘 = (k₀/(ρₒ*g))^0.25
+  cache.γ = (ρᵢ/ρₒ)*(h/cache.𝑙)
+  cache.α = ω^2*(cache.𝑙/g)
 
-  d = γ*𝑙
-  X = (H-d)/(1im*ω*𝑙^2)
-  geo = [L/𝑙, H/𝑙, h/𝑙, x₀/𝑙, g]
-  NonDimensionalProblem(𝑙, 𝑘, γ, α, X, geo)
+  d = cache.γ*cache.𝑙
+  cache.X = (H-d)/(1im*ω*cache.𝑙^2)
+  cache.geo[1] = L/cache.𝑙
+  cache.geo[2] = H/cache.𝑙
+  cache.geo[3] = h/cache.𝑙
+  cache.geo[4] = x₀/cache.𝑙
+  cache.geo[5] = g
+  return nothing
+end
+
+function non_dimensionalize(Ice::Ice, Fluid::Fluid, ω)
+  cache = preallocate_matrices(NonDimensionalProblem)
+  non_dimensionalize!(cache, Ice, Fluid, ω)
+  cache
 end
 
 ## DataTypes describing the beam-type
