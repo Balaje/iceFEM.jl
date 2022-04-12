@@ -21,9 +21,9 @@ export ηₖ, ξₖ
 # Import
 import iceFEM.NonDimProblem: Ice, Fluid
 import iceFEM.NonDimProblem: NonDimensionalProblem, non_dimensionalize, non_dimensionalize!, preallocate_matrices
-import iceFEM.NonDimProblem: FreeBedrock, FreeClamped, FreeHinged
+import iceFEM.NonDimProblem: FreeBedrock, FreeClamped, FreeHinged, FreeFree
 
-import iceFEM.DispersionEquations: dispersion_free_surface, dispersion_elastic_surface, solve_eigen_eb
+import iceFEM.DispersionEquations: dispersion_free_surface, dispersion_elastic_surface, solve_eigen_eb, dispersion_ice
 
 include("ShallowWaterModel.jl")
 include("FiniteDepthModel.jl")

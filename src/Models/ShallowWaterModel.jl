@@ -1,13 +1,13 @@
 struct ShallowWater end
-mutable struct ShallowWaterSolution
-  a₀::VecOrMat{ComplexF64}
-  b::VecOrMat{ComplexF64}
-  c::VecOrMat{ComplexF64}
-  p::VecOrMat{ComplexF64}
-  m::VecOrMat{ComplexF64}
+mutable struct ShallowWaterSolution{T<:ComplexF64}
+  a₀::Vector{T}
+  b::Vector{T}
+  c::Vector{T}
+  p::Vector{T}
+  m::Vector{T}
   ndp::NonDimensionalProblem
-  A::Matrix{ComplexF64}
-  x::VecOrMat{ComplexF64}
+  A::Matrix{T}
+  x::Vector{T}
   BeamType
 end
 
@@ -97,8 +97,8 @@ function solve!(cache, Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, Fre
   sw.x[1] = α*𝑙/(H-d)
   sw.x[3] = 1-γ*α
   sw.x[end] = 1
-  PolynomialRoots.roots!(sw.m,sw.x,1e-17,6,true)
-  sw.m = sw.m[sortperm(real(sw.m), rev=true)]
+  sw.m .= 0; PolynomialRoots.roots!(sw.m, sw.x, 1e-17, 6, true)
+  sw.m = sort(sw.m, by=real, rev=true)
   m = sw.m
   # 3) Open-ocean
   k = sqrt(α*𝑙/H)
@@ -171,8 +171,7 @@ end
 function preallocate_matrices(::ShallowWater, ::FreeBedrock)
   b = Vector{ComplexF64}(undef,4)
   c = Vector{ComplexF64}(undef,6)
-  cfs = Vector{ComplexF64}(undef,5)
-  p = Vector{ComplexF64}(undef,6)
+  p = Vector{ComplexF64}(undef,4)
   m = Vector{ComplexF64}(undef,6)
   a₀ = Vector{ComplexF64}(undef,1)
   ndp = preallocate_matrices(NonDimensionalProblem)
@@ -180,10 +179,12 @@ function preallocate_matrices(::ShallowWater, ::FreeBedrock)
   x = Vector{ComplexF64}(undef,9)
   sw=ShallowWaterSolution(a₀, b, c, p, m,
                           ndp, A, x, FreeBedrock())
-  sw,cfs
+  cfs = Vector{ComplexF64}(undef,7)
+  cfs1 = Vector{ComplexF64}(undef,5)
+  sw,(cfs,cfs1)
 end
 function solve!(cache, Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, ::ShallowWater)
-  sw,rs = cache
+  sw,(rs,rs1) = cache
   non_dimensionalize!(sw.ndp, Ice, Fluid, ω)
   ndp = sw.ndp
   α = ndp.α
@@ -199,20 +200,22 @@ function solve!(cache, Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, ::ShallowWater
   Aₚ = g/(1im*ω)
   xg = ndp.geo[4]
   # Solve the beam-fluid dispersion equation
-  resize!(rs,7)
   rs .= 0
   rs[1] = α*𝑙/(H-d)
   rs[3] = 1-γ*α
   rs[end] = 1
+  #sw.m = roots(rs)
+  sw.m .= 0
   PolynomialRoots.roots!(sw.m, rs, 1e-17, 6, true)
-  sw.m = sw.m[sortperm(real(sw.m), rev=true)]
+  sw.m = sort(sw.m, by=real, rev=true)
   m = sw.m
   # Solve the beam-bedrock equation
-  resize!(rs,5)
-  rs .= 0
-  rs[1] = 𝑘^4 - γ*α
-  rs[end] = 1
-  PolynomialRoots.roots!(sw.p, rs, 1e-17, 4, true)
+  sw.p .= 0
+  rs1 .= 0
+  rs1[1] = 𝑘^4 - γ*α
+  rs1[end] = 1
+  PolynomialRoots.roots!(sw.p, rs1, 1e-17, 4, true)
+  #sw.p = roots(rs1)
   p₁ = 0; p₂ = 0
   if(real(𝑘^4 - γ*α) > 0)
     p₁ = sw.p[(real(sw.p) .> 1e-9)][1]

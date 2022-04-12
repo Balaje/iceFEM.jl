@@ -66,5 +66,6 @@ end
 struct FreeBedrock end
 struct FreeClamped end
 struct FreeHinged end
+struct FreeFree end
 
 ## Function for the derivative of the displacements
