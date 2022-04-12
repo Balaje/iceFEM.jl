@@ -4,7 +4,7 @@ using Plots
 #############################################
 # Iceberg/fluid parameters
 #############################################
-L = 4000
+L = 3630
 ρᵢ = 922.5
 Eᵢ = 2e9
 ν = 0.33
@@ -57,3 +57,29 @@ plt2 = plot(ωₛ/(2π), abs.(a₀ₛ), color=:blue, linewidth=2, label="\$R(\\o
 plot!(plt2, ωₛ/(2π), abs.(d₀ₛ), color=:green, linewidth=2, label="\$T(\\omega)\$")
 xlabel!(plt2,"\$\\omega/2\\pi\$ (in s\$^{-1}\$)")
 ylabel!(plt2,"\$R(\\omega)\$ or \$T(\\omega)\$ (in m)")
+
+savefig(plt1,"DispVsFreqEMM.pdf")
+savefig(plt2,"RefTraVsFreqEMM.pdf")
+
+################################################
+# Reflection/Transmission vs Complex Frequency
+################################################
+# N = 200
+# ωᵣ = 2π*LinRange(0.01,0.125,N)
+# X = ωᵣ' .* ones(N)
+# ωᵢ = LinRange(-0.08,0.08,N)
+# Y = ones(N)' .* ωᵢ
+# ωₛ = X + 1im*Y
+# a₀ₛ = zeros(ComplexF64,N,N)
+# d₀ₛ = zeros(ComplexF64,N,N)
+# for i=1:size(ωₛ,1)
+#   for j=1:size(ωₛ,2)
+#     fd = solve(ice, fluid, ωₛ[i,j], BeamType, WaterType)
+#     local Aₚ = g/(1im*ωₛ[i,j])
+#     a₀ₛ[i,j] = fd.aₘ[1]/Aₚ
+#     d₀ₛ[i,j] = fd.aₘ[NModes+2]/Aₚ
+#   end
+# end
+# Rω = portrait(a₀ₛ,PTcgrid)
+# Tω = portrait(d₀ₛ,PTcgrid)
+# plt3 = plot(ωᵣ, ωᵢ, Rω)

@@ -230,7 +230,7 @@ function u₁(x, sol::FiniteDepthSolution)
   xg = sol.ndp.geo[4]
 
   X = 0*x
-  if(sol.BeamType isa Union{FreeClamped, FreeHinged, FreeFree})
+  if(sol.BeamType[1] isa Union{FreeClamped, FreeHinged, FreeFree})
     for m in 1:length(cₘ⁺)
       X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
                             + cₘ⁺[m]*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
@@ -446,5 +446,5 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
   dₘ = sol[3N+8:4N+8]
 
   FiniteDepthSolution(vcat(aₘ,dₘ), cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(ComplexF64,2,1)),
-                      vec(zeros(ComplexF64,2,1)), ndp, FreeFree())
+                      vec(zeros(ComplexF64,2,1)), ndp, (FreeFree(), LHS))
 end
