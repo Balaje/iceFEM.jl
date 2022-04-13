@@ -2,15 +2,17 @@ struct FiniteDepth
   N::Int64
 end
 FiniteDepth() = FiniteDepth(3)
-struct FiniteDepthSolution
-  aₘ::Vector{ComplexF64}
-  cₘ⁻::Vector{ComplexF64}
-  cₘ⁺::Vector{ComplexF64}
-  kₘ::Vector{ComplexF64}
-  κₘ::Vector{ComplexF64}
-  p::Vector{ComplexF64}
-  b::Vector{ComplexF64}
+struct FiniteDepthSolution{T<:ComplexF64}
+  aₘ::Vector{T}
+  cₘ⁻::Vector{T}
+  cₘ⁺::Vector{T}
+  kₘ::Vector{T}
+  κₘ::Vector{T}
+  p::Vector{T}
+  b::Vector{T}
   ndp::NonDimensionalProblem
+  K::Matrix{T}
+  f::Vector{T}
   BeamType
 end
 
@@ -106,7 +108,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   cₘ⁻ = cₘ[1:N+3]
   cₘ⁺ = cₘ[N+4:2N+6]
   FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(ComplexF64,2,1)),
-                      vec(zeros(ComplexF64,2,1)), ndp, ptype)
+                      vec(zeros(ComplexF64,2,1)), ndp, LHS, vec(RHS), ptype)
 end
 ############################################
 # Finite depth model with grounding line
@@ -206,14 +208,14 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
 
   # Find the coefficients of the bedrock part
   fd = FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(ComplexF64,2,1)),
-                           vec(zeros(ComplexF64,2,1)), ndp, FreeBedrock())
+                           vec(zeros(ComplexF64,2,1)), ndp, LHS, vec(RHS), FreeBedrock())
   ηg = u₁(xg, fd)
   ∂ₓηg = ∂ₓu₁(xg, fd)
   A = [1 1; p₁ p₂]
   f = [ηg, ∂ₓηg]
   b = A\f
   FiniteDepthSolution(aₘ, cₘ⁻, cₘ⁺, vec(k), vec(κ), -[p₁, p₂],
-                      vec(b), ndp, FreeBedrock())
+                      vec(b), ndp, LHS, vec(RHS), FreeBedrock())
 end
 
 function u₁(x, sol::FiniteDepthSolution)
@@ -230,7 +232,7 @@ function u₁(x, sol::FiniteDepthSolution)
   xg = sol.ndp.geo[4]
 
   X = 0*x
-  if(sol.BeamType[1] isa Union{FreeClamped, FreeHinged, FreeFree})
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged, FreeFree})
     for m in 1:length(cₘ⁺)
       X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
                             + cₘ⁺[m]*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
@@ -446,5 +448,5 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
   dₘ = sol[3N+8:4N+8]
 
   FiniteDepthSolution(vcat(aₘ,dₘ), cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(ComplexF64,2,1)),
-                      vec(zeros(ComplexF64,2,1)), ndp, (FreeFree(), LHS))
+                      vec(zeros(ComplexF64,2,1)), ndp, LHS, vec(RHS), FreeFree())
 end
