@@ -15,12 +15,12 @@ struct Fluid <: Any
 end
 
 mutable struct NonDimensionalProblem <: Any
-  𝑙::Float64
-  𝑘::Float64
-  γ::Float64
-  α::ComplexF64
-  X::ComplexF64
-  geo::Vector{Float64}
+  𝑙::Complex{AbstractFloat}
+  𝑘::Complex{AbstractFloat}
+  γ::AbstractFloat
+  α::Complex{AbstractFloat}
+  X::Complex{AbstractFloat}
+  geo::Vector{AbstractFloat}
 end
 
 function preallocate_matrices(::Type{NonDimensionalProblem})

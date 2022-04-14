@@ -25,14 +25,14 @@ function homotopy(alpha, beta, gamma, N)
   if(N==0)
     mroot = oneroot(1, beta, gamma, 1)
   elseif(N==1)
-    arr = collect(0:0.01*(2*(beta > 1)-1):log(beta))
+    arr = collect(0:0.01*(2*(beta > 1.)-1.):log(beta))
     betastep = exp.([arr; log(beta)])
     mroot = oneroot(1, 1, gamma, 0.6066 + 0.8761im)
     for k=2:length(betastep)
       mroot = oneroot(1, betastep[k], gamma, mroot)
     end
   elseif(N==2)
-    arr = collect(0:0.01*(2*(beta > 1)-1):log(beta))
+    arr = collect(0:0.01*(2*(beta > 1.)-1):log(beta))
     betastep = exp.([arr; log(beta)])
     mroot = oneroot(1, 1, gamma, -0.6066 + 0.8761im)
     for k=2:length(betastep)
@@ -42,7 +42,7 @@ function homotopy(alpha, beta, gamma, N)
     mroot = oneroot(1, beta, gamma, 1im*(N-2)*π)
   end
 
-  arr = collect(0:0.01*(2*(abs(alpha) > 1)-1):log(abs(alpha)))
+  arr = collect(0:0.01*(2*(abs(alpha) > 1.)-1):log(abs(alpha)))
   arr1 = [arr; log(abs(alpha))]
   alphastep = exp.(arr1)
 
@@ -69,7 +69,7 @@ function dispersion_ice(alpha, beta, gamma, N, H)
   alpha = alpha*H
   beta = beta/H^4
   gamma = gamma/H
-  mroots = zeros(ComplexF64,N+1, length(beta))
+  mroots = zeros(typeof(alpha),N+1, length(beta))
   for j=1:N+1
     mroots[j,1] = homotopy(alpha[1], beta[1], gamma[1], j-1)
     for p=2:length(beta)

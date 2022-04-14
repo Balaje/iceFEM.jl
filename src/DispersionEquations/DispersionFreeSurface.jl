@@ -14,7 +14,7 @@ end
 ## Function genalphastep to increment.
 function genalphastep(start, last, step)
   length=floor((last-start)/step);
-  alphastep=zeros(Int64(length+2),1);
+  alphastep=zeros(AbstractFloat, Int64(length+2),1);
   for m=1:Int64(length)+2
     alphastep[m]=start+(m-1)*step;
   end
@@ -30,11 +30,11 @@ function homotopy(alpha, N)
     mroot=oneroot(1,1im*N*pi);
   end
   step=0.043;
-  alphastep=genalphastep(1,abs(alpha),-step*(abs(alpha)<1)+step*(abs(alpha)>=1));
+  alphastep=genalphastep(1,abs(alpha),-step*(abs(alpha)<1.)+step*(abs(alpha)>=1.));
   for m=1:length(alphastep)
     mroot=oneroot(alphastep[m],mroot);
   end
-  argstep=genalphastep(0,angle(alpha),-(π/30)*(angle(alpha)<0)+(π/30)*(angle(alpha)>=0));
+  argstep=genalphastep(0,angle(alpha),-(π/30)*(angle(alpha)<0)+(π/30)*(angle(alpha)>=0.));
   newalphastep=zeros(ComplexF64,length(argstep),1);
   for m=2:length(argstep)
     newalphastep[m]=abs(alpha)*exp(1im*argstep[m]);
@@ -46,7 +46,7 @@ end
 ## Function to solve the dispersion equation and get N roots
 function dispersion_free_surface(alph, N, H)
   alpha=alph*H;
-  mroots=zeros(ComplexF64,N+1,1);
+  mroots=zeros(typeof(alph),N+1,1);
   if(N==0)
     count=0;
     mroots[count+1]=homotopy(alpha,count);

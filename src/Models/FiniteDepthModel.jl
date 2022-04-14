@@ -2,7 +2,7 @@ struct FiniteDepth
   N::Int64
 end
 FiniteDepth() = FiniteDepth(3)
-struct FiniteDepthSolution{T<:ComplexF64}
+struct FiniteDepthSolution{T<:Complex}
   aₘ::Vector{T}
   cₘ⁻::Vector{T}
   cₘ⁺::Vector{T}
@@ -447,6 +447,6 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
   cₘ⁺ = cₘ[N+4:2N+6]
   dₘ = sol[3N+8:4N+8]
 
-  FiniteDepthSolution(vcat(aₘ,dₘ), cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(ComplexF64,2,1)),
-                      vec(zeros(ComplexF64,2,1)), ndp, LHS, vec(RHS), FreeFree())
+  FiniteDepthSolution(vcat(aₘ,dₘ), cₘ⁻, cₘ⁺, vec(k), vec(κ), vec(zeros(eltype(k),2,1)),
+                      vec(zeros(eltype(k),2,1)), ndp, LHS, vec(RHS), FreeFree())
 end
