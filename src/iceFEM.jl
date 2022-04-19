@@ -4,6 +4,7 @@ using PolynomialRoots
 using Plots
 using LaTeXStrings
 using LinearAlgebra
+using Roots
 
 include("./NonDimensionalProblem/NonDimensionalProblem.jl")
 include("./DispersionEquations/DispersionEquations.jl")

@@ -1,3 +1,4 @@
+using Roots
 # 1) Dispersion equation of the composite beam
 function _dispersion_composite_beam(beta, ndp::NonDimensionalProblem)
   α = ndp.α
@@ -5,8 +6,7 @@ function _dispersion_composite_beam(beta, ndp::NonDimensionalProblem)
   𝑘 = ndp.𝑘
   xg = ndp.geo[4]
 
-  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
-  p = roots(pl)
+  p = PolynomialRoots.roots([𝑘^4 - γ*α, 0, 0, 0, 1])
   p1 = 0; p2 = 0;
   if(real(𝑘^4 - γ*α) > 0)
     p1 = p[(real(p) .< 1e-9)][1]

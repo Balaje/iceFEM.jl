@@ -9,8 +9,7 @@ function ηₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeBedrock)
   γ = ndp.γ
   𝑘 = ndp.𝑘
   xg = ndp.geo[4]
-  pl = Polynomial([𝑘^4 - γ*α, 0, 0, 0, 1])
-  p = roots(pl)
+  p = PolynomialRoots.roots([𝑘^4 - γ*α, 0, 0, 0, 1])
   if(real(𝑘^4 - γ*α) > 0)
     p₁ = p[(real(p) .< 1e-9)][1]
     p₂ = p[(real(p) .< 1e-9)][2]
