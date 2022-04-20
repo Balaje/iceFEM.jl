@@ -22,7 +22,7 @@ fluid = Fluid(ρₒ, 0, g, H, 0)
 ϕ₁ = solve(ice, fluid, ω, FreeFree(), FiniteDepth(5))
 x = 0:0.01:ϕ₁.ndp.geo[1]
 Uϕ₁ = u₁(x, ϕ₁)
-ξ₁ = readdlm("./examples/solDisp0_2GPa_100s_3630m.dat", '\t', Float64, '\n')
+ξ₁ = readdlm("./solDisp0_2GPa_100s_3630m.dat", '\t', Float64, '\n')
 plt = plot(x, abs.(Uϕ₁), color=:red, label="Thin Plate", linewidth=2)
 plot!(plt, ξ₁[:,1], abs.(ξ₁[:,4]), color=:blue, label="2D Elasticity",
       linestyle=:dash,  linewidth=2)
@@ -33,7 +33,7 @@ ylabel!(plt, "\$|u|\$ (in m)")
 ϕ₂ = solve(ice, fluid, ω, FreeFree(), FiniteDepth(3))
 x = 0:0.01:ϕ₂.ndp.geo[1]
 Uϕ₂ = u₁(x, ϕ₂)
-ξ₂ = readdlm("./examples/solDisp0_2GPa_50s_3630m.dat", '\t', Float64, '\n')
+ξ₂ = readdlm("./solDisp0_2GPa_50s_3630m.dat", '\t', Float64, '\n')
 plt1 = plot(x, abs.(Uϕ₂), color=:red, label="Thin Plate",  linewidth=2)
 plot!(plt1, ξ₂[:,1], abs.(ξ₂[:,4]), color=:blue, label="2D Elasticity",
       linestyle=:dash,  linewidth=2)
