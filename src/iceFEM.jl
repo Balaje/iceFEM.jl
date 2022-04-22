@@ -9,6 +9,7 @@ using Roots
 include("./NonDimensionalProblem/NonDimensionalProblem.jl")
 include("./DispersionEquations/DispersionEquations.jl")
 include("./Models/Models.jl")
+include("./ReissnerMindlinPlate/ReissnerMindlinPlate.jl")
 
 # Export
 using iceFEM.NonDimProblem: Ice, Fluid, NonDimensionalProblem
@@ -25,6 +26,9 @@ using iceFEM.Models: u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
 using iceFEM.Models: FiniteDepth, FiniteDepthSolution
 using iceFEM.Models: FiniteDepthFEM, FiniteElementModel
 
+using iceFEM.ReissnerMindlinPlate: ReissnerMindlinIce
+using iceFEM.ReissnerMindlinPlate: non_dimensionalize
+
 export Ice, Fluid, NonDimensionalProblem
 export FreeBedrock, FreeClamped, FreeHinged, FreeFree
 export non_dimensionalize
@@ -35,5 +39,7 @@ export FiniteDepth, FiniteDepthSolution
 export FiniteDepthFEM, FiniteElementModel
 export u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
 export u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
+
+export ReissnerMindlinIce
 
 end # module
