@@ -27,7 +27,7 @@ using iceFEM.Models: FiniteDepth, FiniteDepthSolution
 using iceFEM.Models: FiniteDepthFEM, FiniteElementModel
 
 using iceFEM.ReissnerMindlinPlate: ReissnerMindlinIce
-using iceFEM.ReissnerMindlinPlate: non_dimensionalize
+using iceFEM.ReissnerMindlinPlate: non_dimensionalize, dispersion_ice
 
 export Ice, Fluid, NonDimensionalProblem
 export FreeBedrock, FreeClamped, FreeHinged, FreeFree
