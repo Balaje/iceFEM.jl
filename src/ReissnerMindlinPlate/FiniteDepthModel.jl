@@ -52,7 +52,7 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth, ::Reissn
   B4 = hcat(D3.*transpose(repeat(-κ.*exp.(-κ*LL), 1, N+1)), D3.*transpose(repeat(κ, 1, N+1))) # Match vel. at x=L
 
 
-  γαδ = (γ*α*δ/ζ + γ*α*ζ/12)*0
+  γαδ = (γ*α*δ/ζ + γ*α*ζ/12)
   B5 = transpose(hcat(-(κ.^3).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
                       (κ.^4 .+ γαδ*κ.^2).*exp.(-κ*LL).*tan.(κ*(HH-γ)), #Free at x=L (cₘ⁻)
                       -(κ.^3).*tan.(κ*(HH-γ)),
