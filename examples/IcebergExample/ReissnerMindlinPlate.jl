@@ -2,7 +2,7 @@ using iceFEM
 using Plots
 using DelimitedFiles
 
-ice = Ice(922.5, 2e9, 0.3, 3630, 280);
+ice = Ice(922.5, 5e9, 0.3, 3630, 280);
 fluid = Fluid(1025, 0, 9.8, 500, 0);
 μ = 10*(1+0.3)/(12+11*0.3)
 
@@ -26,7 +26,7 @@ plot!(plt, ωₛ, abs.(κₛᵣ[:,2]), label="RM-plate (Mode 2)", linewidth=2, l
 ###########################################################
 # Solve an example problem and verify energy conservation #
 ###########################################################
-ω = 2π/10
+ω = 2π/15
 sol = solve(ice, fluid, ω, FreeFree(), FiniteDepth(4), ReissnerMindlinIce(); μ=μ);
 Aₚ = 9.8/(1im*ω)
 R = sol.aₘ[1]/Aₚ; T = (sol.aₘ[6]/Aₚ)#*((κₜ*sinh(κₜ*(HH-γ)))/(kₜ*sinh(kₜ*(HH-γ))))
@@ -40,9 +40,9 @@ x = LinRange(0,sol1.ndp.geo[1],200);
 Uₖₗ = u₁(x, sol1);
 plot!(plt1, x, abs.(Uₖₗ), label="K-L Plate", linewidth=2, color=:red)
 # Compare with LE
-ξ₂ = readdlm("./solDisp0_2GPa_10s_3630m_MS.dat", '\t', Float64, '\n')
-plot!(plt1, ξ₂[:,1], abs.(ξ₂[:,4]), color=:green, label="2D Elasticity",
-       linestyle=:dash,  linewidth=2)
+# ξ₂ = readdlm("./solDisp0_2GPa_10s_3630m_MS.dat", '\t', Float64, '\n')
+# plot!(plt1, ξ₂[:,1], abs.(ξ₂[:,4]), color=:green, label="2D Elasticity",
+#        linestyle=:dash,  linewidth=2)
 
 ########################################################
 # Compute resonance frequency using the R-M Plate theory
