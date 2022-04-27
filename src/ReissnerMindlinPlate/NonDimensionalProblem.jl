@@ -29,7 +29,7 @@ function non_dimensionalize!(cache, Ice::Ice, Fluid::Fluid, ω, ::Type{ReissnerM
   cache.geo[4] = x₀/cache.𝑙
   cache.geo[5] = g
   G = (Eᵢ/(2*(1+ν)))
-  cache.geo[6] = (ρₒ*g*h)/(μ*G)
+  cache.geo[6] = (ρₒ*g*cache.γ)/(μ*G)
   return nothing
 end
 

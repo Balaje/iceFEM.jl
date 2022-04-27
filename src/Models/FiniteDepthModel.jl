@@ -25,7 +25,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   ndp = non_dimensionalize(Ice, Fluid, ω)
   α = ndp.α
   𝑙 = ndp.𝑙
-  g = ndp.geo[end]
+  g = ndp.geo[5]
   γ = ndp.γ
   𝑘 = ndp.𝑘
   X = ndp.X
@@ -118,7 +118,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
   ndp = non_dimensionalize(Ice, Fluid, ω)
   α = ndp.α
   𝑙 = ndp.𝑙
-  g = ndp.geo[end]
+  g = ndp.geo[5]
   γ = ndp.γ
   𝑘 = ndp.𝑘
   X = ndp.X
@@ -220,7 +220,7 @@ end
 
 function u₁(x, sol::FiniteDepthSolution)
   α = sol.ndp.α
-  g = sol.ndp.geo[end]
+  g = sol.ndp.geo[5]
   𝑙 = sol.ndp.𝑙
   ω = √(α*g/𝑙)
   cₘ⁺ = sol.cₘ⁺
@@ -257,7 +257,7 @@ end
 ######################################################
 function ∂ₓu₁(x, sol::FiniteDepthSolution)
   α = sol.ndp.α
-  g = sol.ndp.geo[end]
+  g = sol.ndp.geo[5]
   𝑙 = sol.ndp.𝑙
   ω = √(α*g/𝑙)
   cₘ⁺ = sol.cₘ⁺
@@ -292,7 +292,7 @@ function ∂ₓu₂(x, sol::FiniteDepthSolution)
 end
 function ∂ₓ²u₁(x, sol::FiniteDepthSolution)
   α = sol.ndp.α
-  g = sol.ndp.geo[end]
+  g = sol.ndp.geo[5]
   𝑙 = sol.ndp.𝑙
   ω = √(α*g/𝑙)
   cₘ⁺ = sol.cₘ⁺
@@ -328,7 +328,7 @@ function ∂ₓ²u₂(x, sol::FiniteDepthSolution)
 end
 function ∂ₓ³u₁(x, sol::FiniteDepthSolution)
   α = sol.ndp.α
-  g = sol.ndp.geo[end]
+  g = sol.ndp.geo[5]
   𝑙 = sol.ndp.𝑙
   ω = √(α*g/𝑙)
   cₘ⁺ = sol.cₘ⁺
@@ -370,7 +370,7 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
   ndp = non_dimensionalize(ice, fluid, ω)
   α = ndp.α
   𝑙 = ndp.𝑙
-  g = ndp.geo[end]
+  g = ndp.geo[5]
   γ = ndp.γ
   𝑘 = ndp.𝑘
   X = ndp.X

@@ -6,7 +6,7 @@
 ##
 
 function f(z, alpha, beta, gamma, delta, zeta, H)
-  A = delta/zeta*(gamma*alpha - 1) + gamma*alpha*zeta/12
+  A = (delta/zeta*(gamma*alpha - 1) + gamma*alpha*zeta/12)
   B = (gamma*alpha - 1)*(gamma*alpha*delta/12 - 1)
   C = delta*alpha/zeta
   D = alpha*(gamma*alpha*delta/12 - 1)
