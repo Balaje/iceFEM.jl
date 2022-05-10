@@ -101,7 +101,7 @@ function solve!(cache, Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, Fre
   sw.m = sort(sw.m, by=real, rev=true)
   m = sw.m
   # 3) Open-ocean
-  k = sqrt(α*𝑙/H)
+  k = -sqrt(α*𝑙/H)
   for i=1:6
     if(i==1 || i==2)
       sw.A[i,1] = m[i]
