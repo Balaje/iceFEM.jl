@@ -6,11 +6,16 @@
 ##
 
 function f(z, alpha, beta, gamma, delta, zeta, H)
-  A = (delta/zeta*(gamma*alpha - 1) + gamma*alpha*zeta/12)
-  B = (gamma*alpha - 1)*(gamma*alpha*delta/12 - 1)
-  C = delta*alpha/zeta
-  D = alpha*(gamma*alpha*delta/12 - 1)
-  z.*tanh.(z*H) .+ (D .+ C*z.^2)./(beta*z.^4 .+ A*z.^2 .+ B)
+  #delta = 0
+  A = -delta/zeta + gamma*alpha*(delta/zeta + zeta/12)
+  B = (1 - gamma*alpha)*(1 - gamma*alpha*delta/12)
+  C = -delta*alpha/zeta
+  D = alpha*(1 - gamma*alpha*delta/12)
+  # A = delta/zeta - gamma*alpha*delta/zeta
+  # B = 1 - gamma*alpha
+  # C = -delta*alpha/zeta
+  # D = -alpha
+  z.*tanh.(z*H) .- (D .+ C*z.^2)./(beta*z.^4 .+ A*z.^2 .+ B)
 end
 
 function dispersion_ice(alpha, beta, gamma, delta, zeta, N, H)
@@ -20,7 +25,7 @@ function dispersion_ice(alpha, beta, gamma, delta, zeta, N, H)
     for m=1:length(beta)
       mroots[j,m] = nlsolve(z-> f(z, alpha, beta, gamma, delta, zeta, H),
                             [guess_roots[j,m]]; method=:newton,
-                            linesearch=BackTracking(),ftol=1e-10).zero[1]
+                            linesearch=BackTracking(),ftol=1e-12).zero[1]
     end
   end
   mroots*1im

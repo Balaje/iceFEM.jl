@@ -1,6 +1,6 @@
 function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth, ::ReissnerMindlinIce; μ=1)
   N = fd.N
-  ndp = non_dimensionalize(ice, fluid, ω, ReissnerMindlinIce(); μ=μ)
+  ndp = non_dimensionalize(ice, fluid, ω, ReissnerMindlinIce())
   α = ndp.α
   𝑙 = ndp.𝑙
   g = ndp.geo[5]
@@ -13,11 +13,16 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth, ::Reissn
   d = γ*𝑙
   Aₚ = g/(1im*ω)
   # New parameters for the RM-plate
-  δ = ndp.geo[end]
-  ζ = γ^2
+  δ = ndp.geo[6]/μ
+  ζ = ndp.geo[3]^2
 
   k = dispersion_free_surface(α, N, HH)
   κ = dispersion_ice(α, 1., γ, δ, ζ, N+2, HH-γ)
+  # κ = dispersion_ice(α, 1., γ, N+2, HH-γ)
+  # display(κ)
+  # tmp = dispersion_ice(α, 1., γ, δ, ζ, N+2, HH-γ)
+  # κ[2] = tmp[2]; κ[3] = tmp[3];
+  # display(κ)
 
   function innerproduct(k, kappa, H, d)
     if(abs(k-kappa)>=1e-7)
@@ -52,7 +57,7 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth, ::Reissn
   B4 = hcat(D3.*transpose(repeat(-κ.*exp.(-κ*LL), 1, N+1)), D3.*transpose(repeat(κ, 1, N+1))) # Match vel. at x=L
 
 
-  γαδ = (γ*α*δ/ζ + γ*α*ζ/12)
+  γαδ = 1*(γ*α*δ/ζ + γ*α*ζ/12)
   B5 = transpose(hcat(-(κ.^3).*exp.(-κ*LL).*tan.(κ*(HH-γ)),
                       (κ.^4 .+ γαδ*κ.^2).*exp.(-κ*LL).*tan.(κ*(HH-γ)), #Free at x=L (cₘ⁻)
                       -(κ.^3).*tan.(κ*(HH-γ)),

@@ -1,10 +1,11 @@
 using iceFEM
 using Plots
 using DelimitedFiles
+using PolynomialRoots
 
-ice = Ice(922.5, 5e9, 0.3, 3630, 280);
+ν = 0.33
+ice = Ice(922.5, 2e9, ν, 3630, 280);
 fluid = Fluid(1025, 0, 9.8, 500, 0);
-μ = 10*(1+0.3)/(12+11*0.3)
 
 ##############################################
 # Plot the roots of the RM-plate vs KL-plate #
@@ -13,11 +14,10 @@ fluid = Fluid(1025, 0, 9.8, 500, 0);
 κₛₜ = zeros(ComplexF64, length(ωₛ), 3)
 κₛᵣ = zeros(ComplexF64, length(ωₛ), 3)
 for m=1:length(ωₛ)
-  local ndp = non_dimensionalize(ice, fluid, ωₛ[m], ReissnerMindlinIce(); μ=μ)
+  local ndp = non_dimensionalize(ice, fluid, ωₛ[m], ReissnerMindlinIce())
   κₛₜ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, 2, ndp.geo[2]-ndp.γ)
-  κₛᵣ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, ndp.geo[end], ndp.geo[3]^2, 2, ndp.geo[2]-ndp.γ)
+  κₛᵣ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, ndp.geo[end]/μ, ndp.geo[3]^2, 2, ndp.geo[2]-ndp.γ)
 end
-ind = 1
 plt = plot(ωₛ, abs.(κₛₜ[:,1]), label="KL-plate (Mode 1)", linewidth=2, linecolor="red")
 plot!(plt, ωₛ, abs.(κₛᵣ[:,1]), label="RM-plate (Mode 1)", linewidth=2, linecolor="black")
 plot!(plt, ωₛ, abs.(κₛₜ[:,2]), label="KL-plate (Mode 2)", linewidth=2, linecolor="red", linestyle=:dashdot)
@@ -27,22 +27,35 @@ plot!(plt, ωₛ, abs.(κₛᵣ[:,2]), label="RM-plate (Mode 2)", linewidth=2, l
 # Solve an example problem and verify energy conservation #
 ###########################################################
 ω = 2π/15
-sol = solve(ice, fluid, ω, FreeFree(), FiniteDepth(4), ReissnerMindlinIce(); μ=μ);
+NModes = 4
+#### For determining μ
+ndp = non_dimensionalize(ice, fluid, ω, ReissnerMindlinIce())
+function findμ(k, α, γ, δ, ζ, H)
+  den = (α - k^5*tanh(k*H) - γ*α*ζ/12*k^3*tanh(k*H) - (1-γ*α)*k*tanh(k*H))
+  num = (δ/ζ*(1-γ*α)*k^3*tanh(k*H) + δ/12*(γ*α)^2*k*tanh(k*H) - δ*α*γ/12*k*tanh(k*H) + α*δ*k^2/ζ + γ*α^2*δ/12)
+  abs(num/den)
+end
+k = abs(dispersion_ice(ndp.α, 1., ndp.γ, 2, ndp.geo[2]-ndp.γ)[1])
+μ = findμ(k, ndp.α, ndp.γ, ndp.geo[end], ndp.geo[3]^2, ndp.geo[2]-ndp.γ)
+@show μ
+####
+sol = solve(ice, fluid, ω, FreeFree(), FiniteDepth(NModes), ReissnerMindlinIce(); μ=μ);
 Aₚ = 9.8/(1im*ω)
-R = sol.aₘ[1]/Aₚ; T = (sol.aₘ[6]/Aₚ)#*((κₜ*sinh(κₜ*(HH-γ)))/(kₜ*sinh(kₜ*(HH-γ))))
+R = (sol.aₘ[1]/Aₚ)
+T = (sol.aₘ[NModes+2]/Aₚ)
 @show abs(R)^2 + abs(T)^2
 x = LinRange(0,sol.ndp.geo[1],200);
 Uᵣₘ = u₁(x, sol);
 plt1 = plot(x, abs.(Uᵣₘ), label="R-M Plate", linewidth=2, color=:blue)
 # Thin-plate solution
-sol1 = solve(ice, fluid, ω, FreeFree(), FiniteDepth(4));
+sol1 = solve(ice, fluid, ω, FreeFree(), FiniteDepth(NModes));
 x = LinRange(0,sol1.ndp.geo[1],200);
 Uₖₗ = u₁(x, sol1);
 plot!(plt1, x, abs.(Uₖₗ), label="K-L Plate", linewidth=2, color=:red)
 # Compare with LE
-# ξ₂ = readdlm("./solDisp0_2GPa_10s_3630m_MS.dat", '\t', Float64, '\n')
-# plot!(plt1, ξ₂[:,1], abs.(ξ₂[:,4]), color=:green, label="2D Elasticity",
-#        linestyle=:dash,  linewidth=2)
+ξ₂ = readdlm("/Users/balajek/Repositories/iceFem-ffpp/python_modules/ICEBERG_COMPLEX/solDisptest.dat", '\t', Float64, '\n')
+plot!(plt1, ξ₂[:,1], abs.(ξ₂[:,4]), color=:green, label="2D Elasticity",
+        linestyle=:dash,  linewidth=2)
 
 ########################################################
 # Compute resonance frequency using the R-M Plate theory
