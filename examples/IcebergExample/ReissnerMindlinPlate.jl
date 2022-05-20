@@ -4,7 +4,7 @@ using DelimitedFiles
 using PolynomialRoots
 
 ν = 0.33
-ice = Ice(922.5, 2e9, ν, 3630, 280);
+ice = Ice(922.5, 5e9, ν, 3630, 280);
 fluid = Fluid(1025, 0, 9.8, 500, 0);
 
 ##############################################
@@ -16,7 +16,7 @@ fluid = Fluid(1025, 0, 9.8, 500, 0);
 for m=1:length(ωₛ)
   local ndp = non_dimensionalize(ice, fluid, ωₛ[m], ReissnerMindlinIce())
   κₛₜ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, 2, ndp.geo[2]-ndp.γ)
-  κₛᵣ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, ndp.geo[end]/μ, ndp.geo[3]^2, 2, ndp.geo[2]-ndp.γ)
+  κₛᵣ[m,:] = dispersion_ice(ndp.α, 1., ndp.γ, ndp.geo[end]/1, ndp.geo[3]^2, 2, ndp.geo[2]-ndp.γ)
 end
 plt = plot(ωₛ, abs.(κₛₜ[:,1]), label="KL-plate (Mode 1)", linewidth=2, linecolor="red")
 plot!(plt, ωₛ, abs.(κₛᵣ[:,1]), label="RM-plate (Mode 1)", linewidth=2, linecolor="black")
@@ -26,7 +26,7 @@ plot!(plt, ωₛ, abs.(κₛᵣ[:,2]), label="RM-plate (Mode 2)", linewidth=2, l
 ###########################################################
 # Solve an example problem and verify energy conservation #
 ###########################################################
-ω = 2π/15
+ω = 2π/4
 NModes = 4
 #### For determining μ
 ndp = non_dimensionalize(ice, fluid, ω, ReissnerMindlinIce())
