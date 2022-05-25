@@ -64,8 +64,9 @@ for i in 1:size(ωc,1)
 end
 ω₂s,H₂s,f₂s = InterpolateFreqDomain(Ω₂, (300,300));
 
-Visualize #
-
+#############
+# Visualize #
+#############
 a₀s = zeros(ComplexF64,size(ω₂s))
 d₀s = zeros(ComplexF64,size(ω₂s))
 for i in 1:size(a₀s,1)

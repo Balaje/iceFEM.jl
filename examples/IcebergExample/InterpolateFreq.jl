@@ -3,7 +3,6 @@ using Test
 using GenericLinearAlgebra
 using LinearAlgebra
 
-
 ######################################################
 # Module for interpolation of the linear system
 ######################################################
@@ -63,7 +62,7 @@ end
 function computeResonanceFrequency(ice, fluid, ω₀, verbosity=0)
   count = 1
   dw = 1e-6
-  tol=1e-9
+  tol=1e-40
   fd = FiniteDepth(4)
   Δw = 1
   while (abs(Δw) > tol) && (count ≤ 50)
