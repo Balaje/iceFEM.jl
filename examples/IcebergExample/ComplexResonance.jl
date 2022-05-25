@@ -105,6 +105,7 @@ ylabel!(plt2, "\$ Im(\\omega)/(2\\pi)\$ (in \$s^{-1}\$)")
 ∂ₓ²Uₛ = zeros(length(ωᵣ), 1)
 for i in 1:length(ωᵣ)
   fd = solve(ice, fluid, ωᵣ[i], BeamType, WaterType)
+  x = 0:0.01:fd.ndp.geo[1]
   ∂ₓ²Uₛ[i] = maximum(abs.(∂ₓ²u₁(x,fd)))*(fd.ndp.γ*1/0.9)*(1/fd.ndp.𝑙)
 end
 plt3 = plot(ωᵣ/(2π), ∂ₓ²Uₛ, color=:red,
