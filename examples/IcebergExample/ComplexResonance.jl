@@ -17,13 +17,15 @@ g = 9.8
 H = 500
 fluid = Fluid(ρₒ, 0, g, H, 0)
 
+plot!(size=(400,200))
+
 ##########################################################################
 # Solve a set of frequency domain problems in the real frequency space
 ##########################################################################
 BeamType=FreeFree()
 NModes=3
 WaterType=FiniteDepth(NModes)
-ωᵣ = 2π*LinRange(0.01,0.125,200)
+ωᵣ = 2π*LinRange(0.01,0.08,200)
 Ω₁ = FreqSpace{Float64}(4*NModes+6, length(ωᵣ)) # Real Coarse-Frequency space
 for i in 1:length(ωᵣ)
   fd = solve(ice, fluid, ωᵣ[i], BeamType, WaterType)
@@ -33,10 +35,10 @@ for i in 1:length(ωᵣ)
 end
 ω₁s,H₁s,f₁s = InterpolateFreqDomain(Ω₁, (1600,));
 for i in 1:length(f₁s)
-  Aₚ = 9.8/(1im*ω₁s[i])
+  local Aₚ = 9.8/(1im*ω₁s[i])
   λ = (H₁s[i])\(f₁s[i])
-  a₀ = λ[1]/Aₚ
-  d₀ = λ[3NModes+8]/Aₚ
+  local a₀ = λ[1]/Aₚ
+  local d₀ = λ[3NModes+8]/Aₚ
 end
 
 #############
@@ -50,7 +52,7 @@ plot!(plt, ω₁s, [abs.((H₁s[i]\f₁s[i]))[1]*ω₁s[i]/9.8 for i in 1:length
 ###########################################################################
 # Solve a set of frequency domain problems in the complex frequency space #
 ###########################################################################
-xc = 2π*LinRange(0.01,0.04,50)
+xc = 2π*LinRange(0.01,0.08,50)
 yc = LinRange(-0.06,0.06,50)
 ωc = (xc' .* ones(length(yc))) + 1im*(ones(length(xc))' .* yc)
 Ω₂ = FreqSpace{ComplexF64}(4*NModes+6, size(ωc,1))
@@ -71,27 +73,43 @@ a₀s = zeros(ComplexF64,size(ω₂s))
 d₀s = zeros(ComplexF64,size(ω₂s))
 for i in 1:size(a₀s,1)
   for j in 1:size(a₀s,2)
-    Aₚ = 9.8/(1im*ω₂s[i,j])
+    local Aₚ = 9.8/(1im*ω₂s[i,j])
     a₀s[i,j] = ((H₂s[i,j])\(f₂s[i,j]))[1]/Aₚ
     d₀s[i,j] = ((H₂s[i,j])\(f₂s[i,j]))[3NModes+8]/Aₚ
   end
 end
 Rω = portrait(a₀s, PTproper, ctype="nist");
 Tω = portrait(d₀s, PTproper, ctype="nist");
-plt1 = plot(LinRange(0.01,0.04,300), LinRange(-0.06,0.06,300)/(2π), reverse(Rω,dims=1))
-xlims!(plt1, (0.01,0.04))
+plt1 = plot(LinRange(0.01,0.08,300), LinRange(-0.06,0.06,300)/(2π), reverse(Rω,dims=1))
+xlims!(plt1, (0.01,0.08))
 ylims!(plt1, (-0.06,0.06)./(2π))
-plt2 = plot(LinRange(0.01,0.04,300), LinRange(-0.06,0.06,300)/(2π), reverse(Tω,dims=1))
-xlims!(plt2, (0.01,0.04))
+plt2 = plot(LinRange(0.01,0.08,300), LinRange(-0.06,0.06,300)/(2π), reverse(Tω,dims=1))
+xlims!(plt2, (0.01,0.08))
 ylims!(plt2, (-0.06,0.06)./(2π))
 
-ω₀s = zeros(ComplexF64,2,1)
+ω₀s = zeros(ComplexF64,3,1)
 ω₀s[1] = computeResonanceFrequency(ice, fluid, 2π*0.012, 1)
 ω₀s[2] = computeResonanceFrequency(ice, fluid, 2π*0.022, 1)
-scatter!(plt1, real(ω₀s)/(2π), imag(ω₀s)/(2π), markercolor=[:white,:white], legend=false)
-scatter!(plt2, real(ω₀s)/(2π), imag(ω₀s)/(2π), markercolor=[:white,:white], legend=false)
+ω₀s[3] = computeResonanceFrequency(ice, fluid, 2π*0.054, 1)
+scatter!(plt1, real(ω₀s)/(2π), imag(ω₀s)/(2π), markercolor=[:white,:white,:white], legend=false)
+scatter!(plt2, real(ω₀s)/(2π), imag(ω₀s)/(2π), markercolor=[:white,:white,:white], legend=false)
 
 xlabel!(plt1, "\$ Re(\\omega)/(2\\pi)\$ (in \$s^{-1}\$)")
 ylabel!(plt1, "\$ Im(\\omega)/(2\\pi)\$ (in \$s^{-1}\$)")
 xlabel!(plt2, "\$ Re(\\omega)/(2\\pi)\$ (in \$s^{-1}\$)")
 ylabel!(plt2, "\$ Im(\\omega)/(2\\pi)\$ (in \$s^{-1}\$)")
+
+#############################
+# Compare against the real axis
+#############################
+∂ₓ²Uₛ = zeros(length(ωᵣ), 1)
+for i in 1:length(ωᵣ)
+  fd = solve(ice, fluid, ωᵣ[i], BeamType, WaterType)
+  ∂ₓ²Uₛ[i] = maximum(abs.(∂ₓ²u₁(x,fd)))*(fd.ndp.γ*1/0.9)*(1/fd.ndp.𝑙)
+end
+plt3 = plot(ωᵣ/(2π), ∂ₓ²Uₛ, color=:red,
+            linewidth=2, legend=false,
+            yaxis=:log10)
+xlabel!(plt3,"\$\\omega/2\\pi\$ (in s\$^{-1}\$)")
+ylabel!(plt3,"\$\\epsilon_{xx} = h |\\partial_x^2 u|\$")
+xlims!(plt3, (0.01,0.08))

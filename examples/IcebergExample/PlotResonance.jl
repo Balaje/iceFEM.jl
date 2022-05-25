@@ -52,3 +52,6 @@ ylabel!(plt3, "\$ \\sqrt{\\sum |\\omega_{r,theo} - \\omega_{exp}|^2}\$")
 Y_err_2 = sqrt.(Y_err.^2 + Y_err_1.^2)
 plot!(plt3, Es, Y_err_2, linewidth=2, linestyle=:dash,
       linecolor=:black, label="Overall Difference")
+vline!(plt3, [Es[argmin(Y_err_2)]], linestyle=:dash,
+       linewidth=1, linecolor=:green,
+       label="\$E_{opt} = \$"*string(round(Es[argmin(Y_err_2)],digits=4))*" GPa")

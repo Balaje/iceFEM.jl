@@ -269,7 +269,7 @@ function ∂ₓu₁(x, sol::FiniteDepthSolution)
   xg = sol.ndp.geo[4]
 
   X = 0*x
-  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged, FreeFree})
     for m in 1:length(cₘ⁺)
       X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
                             + cₘ⁺[m]*(κ[m])*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
@@ -304,7 +304,7 @@ function ∂ₓ²u₁(x, sol::FiniteDepthSolution)
   xg = sol.ndp.geo[4]
 
   X = 0*x
-  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged, FreeFree})
     for m in 1:length(cₘ⁺)
       X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^2*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
                             + cₘ⁺[m]*(κ[m])^2*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
@@ -340,7 +340,7 @@ function ∂ₓ³u₁(x, sol::FiniteDepthSolution)
   xg = sol.ndp.geo[4]
 
   X = 0*x
-  if(sol.BeamType isa Union{FreeClamped, FreeHinged})
+  if(sol.BeamType isa Union{FreeClamped, FreeHinged, FreeFree})
     for m in 1:length(cₘ⁺)
       X = X + -1/(1im*ω*𝑙)*(cₘ⁻[m]*(-κ[m])^3*exp.(-κ[m]*x)*(-κ[m]*tan(κ[m]*(HH-γ)))
                             + cₘ⁺[m]*(κ[m])^3*exp.(κ[m]*(x .-LL))*(-κ[m]*tan(κ[m]*(HH-γ))))
