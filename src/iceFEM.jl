@@ -10,6 +10,7 @@ include("./NonDimensionalProblem/NonDimensionalProblem.jl")
 include("./DispersionEquations/DispersionEquations.jl")
 include("./Models/Models.jl")
 include("./ReissnerMindlinPlate/ReissnerMindlinPlate.jl")
+include("./ComplexResonances/ComplexResonances.jl")
 
 # Export
 using iceFEM.NonDimProblem: Ice, Fluid, NonDimensionalProblem
@@ -29,6 +30,9 @@ using iceFEM.Models: FiniteDepthFEM, FiniteElementModel
 using iceFEM.ReissnerMindlinPlate: ReissnerMindlinIce
 using iceFEM.ReissnerMindlinPlate: non_dimensionalize, dispersion_ice
 
+using iceFEM.ComplexResonances: InterpolateFreqDomain, FreqSpace
+using iceFEM.ComplexResonances: computeResonanceFrequency
+
 export Ice, Fluid, NonDimensionalProblem
 export FreeBedrock, FreeClamped, FreeHinged, FreeFree
 export non_dimensionalize
@@ -41,5 +45,7 @@ export u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
 export u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
 
 export ReissnerMindlinIce
+
+export InterpolateFreqDomain, FreqSpace, computeResonanceFrequency
 
 end # module
