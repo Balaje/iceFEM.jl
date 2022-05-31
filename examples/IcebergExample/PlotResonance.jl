@@ -30,6 +30,14 @@ plot!(plt, Es, 0.12*Es.^0, linewidth=1, linestyle=:dot,
 xlabel!(plt, "Young's Modulus \$E\$ (in GPa)")
 ylabel!(plt, "\$\\omega_r/2\\pi\$ (in s\$^{-1}\$)")
 
+#0.013, 0.045
+#0.05, 0.084
+#0.088, 0.125
+plot!(plt, Es, 0.013*Es.^0, fillrange=0.045*Es.^0, fillalpha=0.35, fillcolor=:red,label="")
+plot!(plt, Es, 0.05*Es.^0, fillrange=0.084*Es.^0, fillalpha=0.35, fillcolor=:green, label="")
+plot!(plt, Es, 0.088*Es.^0, fillrange=0.125*Es.^0, fillalpha=0.35, fillcolor=:blue, label="")
+
+
 plt1 = plot()
 for (j, ω₀) in zip(1:length(ω₀s), ω₀s)
   plot!(plt1, Es, abs.(imag(ωᵣs[:,j]/(2π))), linewidth=2,
@@ -55,3 +63,37 @@ plot!(plt3, Es, Y_err_2, linewidth=2, linestyle=:dash,
 vline!(plt3, [Es[argmin(Y_err_2)]], linestyle=:dash,
        linewidth=1, linecolor=:green,
        label="\$E_{opt} = \$"*string(round(Es[argmin(Y_err_2)],digits=4))*" GPa")
+
+
+########################################
+# Find the Freq.vs Strain curve on Eopt
+########################################
+#L = 3630
+Ls = [3630, 1740]
+ρᵢ = 922.5
+Eᵢ = 2e9
+ν = 0.33
+h = 280
+g = 9.8
+ρₒ = 1025.0
+H = 500
+Eopt = 1.9655
+fluid = Fluid(ρₒ, 0, g, H, 0)
+ωᵣ = 2π*vcat(LinRange(0.01,0.1125,500), LinRange(0.1125,0.125,2000))
+plt4 = plot()
+for (L,clr) in zip(Ls,[:red,:black])
+  local ∂ₓ²Uₚ = zeros(length(ωᵣ), 1)
+  local ice = Ice(ρᵢ, Eopt*1e9, ν, L, h)
+  for j in 1:length(ωᵣ)
+    fd = solve(ice, fluid, ωᵣ[j], FreeFree(), FiniteDepth(4))
+    x = 0:0.01:fd.ndp.geo[1]
+    local ∂ₓ²Uₚ[j] = maximum(abs.(∂ₓ²u₁(x,fd)))*(fd.ndp.γ*1/0.9)*(1/fd.ndp.𝑙)
+  end
+  #plt4 = plot(ωᵣ/(2π), ∂ₓ²Uₚ, linewidth=2, label="Theoretical strain E = 1.9655 GPa")
+  plot!(plt4, ωᵣ/(2π), ∂ₓ²Uₚ, linewidth=2, label="E=1.9655 GPa, L="*string(L)*" m", linecolor=clr)
+end
+vspan!(plt4, [0.013,0.045], linecolor=:red, fillcolor=:red, fillalpha=0.5, label="")
+vspan!(plt4, [0.05,0.084], linecolor=:green, fillcolor=:green, fillalpha=0.5,label="")
+vspan!(plt4, [0.088,0.125], linecolor=:blue, fillcolor=:blue, fillalpha=0.5,label="",yaxis=:log10)
+xlabel!(plt4, "\$\\omega/(2\\pi)\$ (in Hz)")
+ylabel!(plt4, "\$ \\epsilon_{xx}\$")
