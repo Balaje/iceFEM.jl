@@ -85,8 +85,8 @@ x = 0:0.01:sol1.ndp.geo[1];
 U1 = u₁(x, sol1);
 U2 = u₁(x, sol2);
 
-plt = plot(x, abs.(U₁));
-plot!(plt, x, abs.(U₂))
+plt = plot(x, abs.(U1));
+plot!(plt, x, abs.(U2))
 ```
 
 Similarly we can obtain the slope/shear force/bending moment
