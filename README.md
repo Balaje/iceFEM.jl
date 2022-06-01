@@ -1,10 +1,13 @@
 # iceFEM.jl
 
-Contains the Julia package developed during Lift-Off Fellowship at UoA. This package implements the coupled problem of wave-induced motion of ice-shelves and icebergs. 
+Contains the Julia package developed during Lift-Off Fellowship at
+UoA. This package implements the coupled problem of wave-induced
+motion of ice-shelves and icebergs.
 
 ## How to get it
 
-To download the pacakge, clone the repository, change directory and start Julia using 
+To download the package, clone the repository, change directory and
+start Julia using
 
 ```shell
 git clone git@github.com:Balaje/iceFEM.jl.git
@@ -12,7 +15,10 @@ cd iceFEM.jl
 julia --project=.
 ```
 
-## Run a simple example
+## Example 1
+
+Solve the ice-shelf example under the shallow-water and finite depth
+(potential flow) assumption. Set the ice-shelf and fluid properties:
 
 ```julia
 using iceFEM
@@ -45,27 +51,48 @@ Aₚ = g/(1im*ω);
 @show R1 abs(R1);
 @show R2 abs(R2);
 ```
+The `FreeClamped()` variable defines the type of boundary condition at
+$x=L$ where $L$ is the length of the ice. The ice can be
+`FreeClamped()`, `FreeFree()`, `FreeHinged()` and `FreeBedrock()`. The
+fluid is governed by `ShallowWater()` assumption or the
+`FiniteDepth(NModes)` assumption with `NModes` terms. The methods
+available for `solve` currently are as follows:
+
+``` julia
+solve(Ice::Ice, Fluid::Fluid, ω) # Defaults to ShallowWater() and FreeClamped()
+
+solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped,FreeHinged}, ::ShallowWater)
+
+solve(Ice::Ice, Fluid::Fluid, ω, fd::FiniteDepth) # Defaults to FreeClamped()
+
+solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped,FreeHinged}, fd::FiniteDepth)
+
+solve(Ice::Ice, Fluid::Fluid, ω, ::FreeBedrock, fd::FiniteDepth)
+
+solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
+
+solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity)
+
+solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth, ::ReissnerMindlinIce; μ)
+```
 
 We can obtain the displacement profiles and plot them
+
 ``` julia
 using Plots
-x = 0:0.01:sol1.ndp.geo[1]; 
+x = 0:0.01:sol1.ndp.geo[1];
+
 U1 = u₁(x, sol1);
 U2 = u₁(x, sol2);
+
 plt = plot(x, abs.(U₁));
 plot!(plt, x, abs.(U₂))
 ```
-Similarly we can obtain the slope/shear force/bending moment
-``` julia
-# Slope ...
-DxU1 = ∂ₓu₁(x, sol1);
-DxU2 = ∂ₓu₁(x, sol2);
-# Bending Moment ...
-Dx2U1 = ∂ₓ²u₁(x, sol1);
-Dx2U2 = ∂ₓ²u₁(x, sol2);
-# Shear Force ...
-Dx3U1 = ∂ₓ³u₁(x, sol1);
-Dx3U2 = ∂ₓ³u₁(x, sol2);
-```
 
-More examples will be added slowly
+Similarly we can obtain the slope/shear force/bending moment
+
+``` julia
+Slope = ∂ₓu₁(x, sol1);
+BendingMoment = ∂ₓ²u₁(x, sol1);
+ShearForce = ∂ₓ³u₁(x, sol1);
+```
