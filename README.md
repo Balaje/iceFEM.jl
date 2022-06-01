@@ -57,7 +57,7 @@ example, `FreeClamped()` denotes an ice that is Free at $x=0$ and
 Clamped at $x=L$. The ice can be
 `FreeClamped()`, `FreeFree()`, `FreeHinged()` and
 `FreeBedrock()`. Note for the `FreeBedrock()` case, correct (non-zero)
-parameters must be specified in the for the fluid:
+parameters must be specified in the for the fluid, for example:
 
 ``` julia
 xg = 0.7*L; k0 = 10^6; # Position of Grounding line and spring constant of bedrock (0 if not available)
@@ -103,7 +103,7 @@ ShearForce = ∂ₓ³u₁(x, sol1);
 ## Example 2
 
 Same as in Example 1, but with moving bedrock. The bedrock is modelled
-as a spring with spring constant $k$ that provides a vertical force on
+as a spring with spring constant $k_0$ that provides a vertical force on
 the ice-shelf. Set the ice-shelf and fluid properties:
 
 ```julia
@@ -119,12 +119,11 @@ g = 9.8
 H = 500
 k₀ = 10^6
 ϵ = 0.7
-fluid = Fluid(ρₒ, k₀, g, H, ϵ*L)
+fluid = Fluid(ρₒ, k₀, g, H, ϵ*L) # The grounding line position is a fraction of the ice-length.
 ```
 
 We then solve the coupled problem using (1) The finite-depth model (2)
-The finite-element model and (3) Shallow-water model and compare the
-results.
+The finite-element model and compare the results.
 
 ``` julia
 ω = 2π/100
@@ -135,7 +134,7 @@ For the finite element model, a mixed boundary condition
 relating the displacement and slope (Dirichlet BCs) with the bending
 moment and the shear force (Natural BCs) is implemented. The details
 of the finite element model can be set using the `FiniteElementModel`
-variable.
+variable. 
 
 ``` julia
 fe_model = FiniteElementModel(2, (100,20), 6, 4) # dim, partition, nev, NModes
@@ -167,3 +166,5 @@ finite element solution. We also observe that the waves are attenuated
 beyond the grounding line. A smaller value of $k_0$ makes the bedrock
 less stiff, and we can observe the waves propagating throughout the ice
 without damping.
+
+## TODO
