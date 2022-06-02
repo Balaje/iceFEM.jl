@@ -24,7 +24,7 @@ import iceFEM.Models: FiniteDepth, solve, FiniteDepthSolution
 struct ReissnerMindlinIce <: Any end
 
 
-include("NonDimensionalproblem.jl");
+include("NonDimensionalProblem.jl");
 include("DispersionEquation.jl");
 include("FiniteDepthModel.jl");
 
