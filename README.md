@@ -161,6 +161,9 @@ xlabel!(p₁, "x (non Dim)");
 ylabel!(p₁, "\$ |u| \$ (in m)")
 ```
 
+![Comparison of the Eigenfunction matching solution with the Finite Element solution](Images/compareFEM-EMM.png) |
+---- |
+
 We observe a good agreement between the finite depth solution and the
 finite element solution. We also observe that the waves are attenuated
 beyond the grounding line. A smaller value of $k_0$ makes the bedrock
