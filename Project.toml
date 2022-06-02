@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 CurveFit = "5a033b19-8c74-5913-a970-47c3779ef25c"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FindPeaks1D = "d8961e24-b28b-4efb-8e50-1c680b9a7431"
 GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 Gridap = "56d4f2e9-7ea1-5844-9cf6-b9c51ca7ce8e"
