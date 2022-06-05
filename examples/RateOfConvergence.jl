@@ -42,7 +42,7 @@ plt = plot()
 plot!(plt, hs, hs.^2, xaxis=:log10, yaxis=:log10, label="h²",linecolor=:black,linewidth=1,linestyle=:dash)
 for (ω,clr) in zip(ωs,[:red,:green,:blue,:magenta])
   # Finite Depth Solution
-  local solFD = iceFEM.solve(ice, fluid, ω, FreeClamped(), FiniteDepth(4))
+  local solFD = iceFEM.solve(ice, fluid, ω, FreeClamped(), FiniteDepth(8))
 
   print("\n ω = "*string(ω))
   for (n,i) in zip(ns,1:length(ns))
