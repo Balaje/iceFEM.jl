@@ -4,6 +4,7 @@ using PolynomialRoots
 using LinearAlgebra
 using Gridap
 using StaticArrays
+using SparseArrays
 
 # Export
 export ShallowWater, ShallowWaterSolution

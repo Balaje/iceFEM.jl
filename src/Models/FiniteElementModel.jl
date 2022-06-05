@@ -54,18 +54,10 @@ function ξₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeBedrock)
 end
 
 function ηₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeClamped)
-  xg = ndp.geo[4]
-  A = [0 1 0 -1;
-       1 0 -1 0;
-       sinh(β*xg) cosh(β*xg) sin(β*xg) cos(β*xg);
-       cosh(β*xg) sinh(β*xg) cos(β*xg) -sin(β*xg)]
-  # Find eigenvector corresponding to λ = 0 of [A]x = λx
-  b = zeros(ComplexF64, 4, 1)
-  ev = eigvals(A)
-  ind = findfirst(abs.(ev)/maximum(abs.(ev)) .≤ 1e-8)
-  c = eigvecs(A)[:,ind]
-  # Return displacement
-  (c, Nothing, (c[1]*sinh.(β*x) + c[2]*cosh.(β*x) + c[3]*sin.(β*x) + c[4]*cos.(β*x)))
+  LL = ndp.geo[1]
+  P(μ) = -(2*exp(-μ) + 2*√(2)*sin((μ+π/4)))/(exp(-2*μ) + 2*exp(-μ)*sin(μ) - 1)
+  η(x,μ) = -exp.(-μ*x) - P(μ)/2*(exp.(-μ*(1 .- x)) + exp.(-μ*(1 .+ x))) - sin.(μ*x) + (1 + P(μ)*exp(-μ))*cos.(μ*x);
+  (Nothing, Nothing, η(1 .- x/LL, β*LL))
 end
 function ηₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeHinged)
   xg = ndp.geo[4]
@@ -73,7 +65,6 @@ function ηₖ(x, β::Float64, ndp::NonDimensionalProblem, ::FreeHinged)
        1 0 -1 0;
        sinh(β*xg) cosh(β*xg) sin(β*xg) cos(β*xg);
        sinh(β*xg) cosh(β*xg) -sin(β*xg) -cos(β*xg)]
-  b = zeros(ComplexF64, 4, 1)
   # Find eigenvector corresponding to λ = 0 of [A]x = λx
   ev = eigvals(A)
   ind = findfirst(abs.(ev)/maximum(abs.(ev)) .≤ 1e-8)
@@ -122,6 +113,7 @@ function FiniteDepthFEM(ice::Ice, fluid::Fluid, ω, dim::Int64, partition::Tuple
   γ = ndp.γ
   domain = (beam_type==FreeBedrock()) ? (0, xg, -HH, -γ) : (0, LL, -HH, -γ)
   model = CartesianDiscreteModel(domain, partition)
+  model = simplexify(model)
   Ω = Triangulation(model)
   labels = get_face_labeling(model)
   add_tag_from_tags!(labels, "neumannIce", [6])
@@ -136,7 +128,21 @@ end
 include("fem_solve.jl")
 include("ref_coeff.jl")
 
-function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
+function preallocate_matrices(femodel::FiniteElementModel)
+  partition = femodel.partition .+ 1
+  nmodes = femodel.NModes
+  ndofs = partition[1]*partition[2]
+  nev = femodel.nev
+  m1 = spzeros(ComplexF64,ndofs,ndofs)
+  m2 = spzeros(ComplexF64,nmodes+1,ndofs)
+  v1 = zeros(ComplexF64,ndofs)
+  fefunc = Vector{FEFunction}(undef, nev+1)
+  H = zeros(ComplexF64,nev,nev)
+  F = zeros(ComplexF64,nev)
+  m1,m2,v1,fefunc,H,F
+end
+
+function solve!(cache,ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
   ndp = non_dimensionalize(ice, fluid, ω)
   fem = FiniteDepthFEM(ice, fluid, ω, femodel.dim, femodel.partition, femodel.nev, ptype)
   α = ndp.α
@@ -156,31 +162,35 @@ function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; v
   Γ₃ = fem.Γs[1]
   Γ₄ = fem.Γs[2]
 
+  Qϕ,pp,χ,ϕₖʰ,H,F = cache
+
   (verbosity > 0) && print("Obtaining non-local boundary condition ...\n")
-  Qϕ,χ = getMQχ(k, kd, HH, γ, NModes, Aₚ, Γ₄, fem.fespace, exp.(0*kd))
+  getMQχ!(Qϕ, χ, pp, k, kd, HH, γ, NModes, Aₚ, Γ₄, fem.fespace, exp.(0*kd))
 
   (verbosity > 0) && print("Solving Diffraction Potential ...\n")
-  ϕ₀, ϕ₀ʰ = _get_laplace_mat_eb(fem, ndp, ptype, μ[1], 0, 0, Qϕ, χ)
+  ϕₖʰ[1] = _get_laplace_mat_eb!(fem, ndp, ptype, μ[1], 0, 0, Qϕ, χ)
 
-  ϕₖ = zeros(ComplexF64, length(χ), femodel.nev)
-  ϕₖʰ = Vector{FEFunction}(undef, fem.nev)
   (verbosity > 0) && print("Solving Radiation Potential ... ")
   for m=1:fem.nev
-    ϕₖ[:,m], ϕₖʰ[m] = _get_laplace_mat_eb(fem, ndp, ptype, μ[m], 0, ω*𝑙, Qϕ, 0*χ)
+    ϕₖʰ[m+1] = _get_laplace_mat_eb!(fem, ndp, ptype, μ[m], 0, ω*𝑙, Qϕ, 0*χ)
     (verbosity > 0) && print(string(m)*"...")
   end
   (verbosity > 0) && print("\n")
 
   (verbosity > 0) && print("Solving the reduced system ...\n")
-  λ, K, B, AB, F = _build_reduced_system(μ, ϕ₀, ϕₖ, ndp, Γ₃,
-                                         fem.fespace, ptype, 0)
+  λ = _build_reduced_system!(H, F, μ, ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1],
+                                         ndp, Γ₃, fem.fespace, ptype, 0)
 
-  ϕ = ϕ₀ + ϕₖ*λ
-
-  ϕʰ = FEFunction(fem.fespace, vec(ϕ))
+  ϕʰ = ϕₖʰ[1] + sum([ϕₖʰ[m+1]*λ[m] for m in 1:length(λ)])
   Ref = get_ref_coeff(ϕʰ, NModes, k, kd, HH, γ, Γ₄, Aₚ, exp.(0*kd))
 
-  FiniteElementSolution(ϕ₀ʰ, ϕₖʰ, vec(λ), (K, B, AB, F, Ref), ndp, ptype)
+  FiniteElementSolution(ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1], vec(λ),
+                        (H, F, Ref), ndp, ptype)
+end
+
+function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
+  cache = preallocate_matrices(femodel);
+  solve!(cache, ice, fluid, ω, FreeClamped(), femodel; verbosity=verbosity)
 end
 
 function u₁(x, fes::FiniteElementSolution)

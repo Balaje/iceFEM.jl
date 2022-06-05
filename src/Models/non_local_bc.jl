@@ -25,13 +25,11 @@ function getMAT(k, kd, H, d, NModes, Ap, Amp)
 end
 
 # Get the non-local matrix on the boundary
-function getMQχ(k, kd, H, d, NModes, Ap, Γ, V, Amp)
+function getMQχ!(Qϕ, χ, pp, k, kd, H, d, NModes, Ap, Γ, V, Amp)
   A,M,f,g=getMAT(k,kd,H,d,NModes,Ap,Amp);
-  ndofs=num_free_dofs(V); #Get the number of dofs in the domain.
-  pp=zeros(ComplexF64,NModes+1,ndofs);
+  dΓ=Measure(Γ,8);
   for m=1:NModes+1
     τ(x)=cos(kd[m]*(x[2]+H))/cos(kd[m]*(H-d));
-    dΓ=Measure(Γ,6);
     a(u,v)=∫(u*v)*dΓ; #Dummy bilinear form ?
     b(v)=∫(τ*v)*dΓ;
     op=AffineFEOperator(a,b,V,V);
@@ -39,10 +37,8 @@ function getMQχ(k, kd, H, d, NModes, Ap, Γ, V, Amp)
   end
   # Get the matrix corresponding to Qϕ
   Mt=transpose(M);
-  T=inv(Mt)*A*inv(M);
-  tP=T*pp;
-  Qϕ=transpose(pp)*tP;
+  T=sparse(inv(Mt)*A*inv(M));
+  copyto!(Qϕ,transpose(pp)*T*pp);
   c=inv(Mt)*g-T*f;
-  χ=transpose(c)*pp;
-  Qϕ,χ
+  copyto!(χ,transpose(c)*pp)
 end

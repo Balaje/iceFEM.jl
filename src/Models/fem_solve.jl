@@ -1,9 +1,9 @@
-function _get_laplace_mat_eb(f::FiniteDepthFEM, ndp::NonDimensionalProblem, beam_style, β, x₀, ω, Qϕ, χ)
+function _get_laplace_mat_eb!(f::FiniteDepthFEM, ndp::NonDimensionalProblem, beam_style, β, x₀, ω, Qϕ, χ)
   Ω = f.mesh
   Γ₃ = f.Γs[1]
   V = f.fespace
   η(x) = ω*ηₖ(x[1]-x₀, β, ndp, beam_style)[3]
-  _return_matrices(Ω, Γ₃, V, Qϕ, χ, η)
+  ϕₕ = _return_matrices(Ω, Γ₃, V, Qϕ, χ, η)
 end
 
 # function _get_laplace_mat_eb(Ω, Γ, V, QΦ, χ, L, ω, ::FreeFree, offset)
@@ -23,19 +23,18 @@ end
 
 function _return_matrices(Ω, Γ₃, V, QΦ, χ, η)
   dΩ=Measure(Ω,2); # Measure of the domains
-  dΓ₃=Measure(Γ₃,6); #Interface boundary.
+  dΓ₃=Measure(Γ₃,8); #Interface boundary.
   a(u,v) = ∫( ∇(v)⊙∇(u) )*dΩ
   b(v) = ∫(η*v)*dΓ₃
   op=AffineFEOperator(a,b,V,V);
   K=op.op.matrix+QΦ;
-  f=-(1im)*op.op.vector-χ[1,:];
+  f=(1im)*op.op.vector-χ;
   u = K\f
   ϕ = FEFunction(V, u)
-  u,ϕ
 end
 
 # Function to build the reduced system
-function _build_reduced_system(μ, ϕ₀, ϕₖ, ndp, Γ, V, beam_style, L₀)
+function _build_reduced_system!(H, F, μ, ϕ₀, ϕₖ, ndp, Γ, V, beam_style, L₀)
   α = ndp.α
   β = 1
   γ = ndp.γ
@@ -46,29 +45,21 @@ function _build_reduced_system(μ, ϕ₀, ϕₖ, ndp, Γ, V, beam_style, L₀)
   dΓ=Measure(Γ,6)
   nev=length(μ)
 
-  B=zeros(ComplexF64, nev, nev)
-  K=zeros(ComplexF64, nev, nev)
-  AB=zeros(ComplexF64, nev, nev)
-  F=zeros(ComplexF64,nev,1)
-
-  φ₀=FEFunction(V, ϕ₀)
   for i=1:nev
     μₘ=μ[i]
     η(x) = ηₖ(x[1]-L₀, μₘ, ndp, beam_style)[3]
     η²(x) = η(x)*η(x)
-    B[i, i] = (1-γ*α)*sum(∫(η²)*dΓ)
-    K[i,i]=β*μₘ^4*B[i,i]
-    F[i]=(1im*ω/g)*sum(∫(η*φ₀)*dΓ)
-    φₖ=FEFunction(V,ϕₖ[:,i])
+    ∫η² = sum(∫(η²)*dΓ)
+    H[i,i] = (1-γ*α)*∫η²
+    H[i,i] = H[i,i] + β*μₘ^4*∫η²
+    F[i] = -(1im*ω/g)*sum(∫(η*ϕ₀)*dΓ)
     for j=1:nev
-      μₘ=μ[j]
-      ξ(x)=ηₖ(x[1]-L₀, μₘ, ndp, beam_style)[3]
-      AB[j,i]=-(1im*ω/g)*sum(∫(ξ*φₖ)*dΓ)
+      μₘ = μ[j]
+      ξ(x) = ηₖ(x[1]-L₀, μₘ, ndp, beam_style)[3]
+      H[i,j] = H[i,j] + (1im*ω/g)*sum(∫(ξ*ϕₖ[i])*dΓ)
     end
   end
-  H=K+B+AB
   λ=H\F
-  λ, K, B, AB, F
 end
 
 # function buildReducedSystem(μ, ϕ₀, ϕⱼ, α, β, γ, Γ, L, ω, V, ::FreeFree, L₀)
