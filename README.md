@@ -170,4 +170,23 @@ beyond the grounding line. A smaller value of $k_0$ makes the bedrock
 less stiff, and we can observe the waves propagating throughout the ice
 without damping.
 
-## TODO
+## Example 3 - Order of convergence
+
+In this example, we verify the rate of convergence of the finite element method based on modal expansion for the `FreeClamped` ice-shelf. We use modified expressions for the Euler-Bernoulli in-vacuo modes to get stable expressions for high frequencies. See this paper [here](https://www.sciencedirect.com/science/article/abs/pii/S0003682X18310685). We use the `FiniteDepth(4)` solution (eigenfunction matching with 4 modes) as the exact solution. The [full code](https://github.com/Balaje/iceFEM.jl/blob/master/examples/RateOfConvergence.jl) is given here in the `examples/` folder. We test this for 4 incident frequncies:
+
+![Order of convergence of the Finite Element solution](Images/ooc-FEM-clamped.png) |
+---- |
+
+For the test here, we choose our exact solution and approximate solution as:
+```julia
+# Exact Eigenfunction matching solution using 4 terms in the expansion.
+solFD = iceFEM.solve(ice, fluid, ω, FreeClamped(), FiniteDepth(4)) 
+
+# Finite element solution on a uniform domain with 40 in-vacuo modes for the ice and 8 modes for the ocean.
+fe_model = FiniteElementModel(2, partition, 40, 8)
+solFE = iceFEM.solve(ice, fluid, ω, FreeClamped(), fe_model; verbosity=0)
+```
+
+Since the default setting uses $P_1$ Lagrange finite element method, the rate of convergence is $\approx 2$. Note that the convergence also depends on the number of in-vacuo modes of the ice. Too few modes for the in-vacuo ice may erode the rate of convergence. However, sometimes fewer modes can be used to obtain a decent approximation. 
+
+**NOTE:** The regularized expressions have been coded for the `FreeClamped()` beam only. Other beam types are not available yet and is WIP. 
