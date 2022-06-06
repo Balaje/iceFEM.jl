@@ -181,7 +181,8 @@ function solve!(cache,ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementM
   λ = _build_reduced_system!(H, F, μ, ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1],
                                          ndp, Γ₃, fem.fespace, ptype, 0)
 
-  ϕʰ = ϕₖʰ[1] + sum([ϕₖʰ[m+1]*λ[m] for m in 1:length(λ)])
+  ϕʰ = _compute_potential(ϕₖʰ[1], ϕₖʰ[2:fem.nev+1], λ)
+
   Ref = get_ref_coeff(ϕʰ, NModes, k, kd, HH, γ, Γ₄, Aₚ, exp.(0*kd))
 
   FiniteElementSolution(ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1], vec(λ),
@@ -216,4 +217,16 @@ function u₂(x, fes::FiniteElementSolution)
     U = U .+ λ[m]*ξₖ(x, βs[m], ndp, fes.BeamType)[3]
   end
   U
+end
+
+function _compute_potential(ϕ₀, ϕₖ, λₖ)
+  ϕ = get_free_dof_values(ϕ₀)
+  for i in 1:length(ϕₖ)
+    ϕ = ϕ + λₖ[i]*get_free_dof_values(ϕₖ[i])
+  end
+  FEFunction(ϕ₀.fe_space, ϕ)
+end
+
+function ϕₕ(fes::FiniteElementSolution)
+  _compute_potential(fes.ϕ₀, fes.ϕₖ, fes.λₖ)
 end

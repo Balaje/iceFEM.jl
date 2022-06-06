@@ -26,6 +26,7 @@ using iceFEM.Models: u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
 using iceFEM.Models: u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
 using iceFEM.Models: FiniteDepth, FiniteDepthSolution
 using iceFEM.Models: FiniteDepthFEM, FiniteElementModel
+using iceFEM.Models: ϕₕ
 
 using iceFEM.ReissnerMindlinPlate: ReissnerMindlinIce
 using iceFEM.ReissnerMindlinPlate: non_dimensionalize, dispersion_ice
@@ -43,6 +44,7 @@ export FiniteDepth, FiniteDepthSolution
 export FiniteDepthFEM, FiniteElementModel
 export u₁, ∂ₓu₁, ∂ₓ²u₁, ∂ₓ³u₁
 export u₂, ∂ₓu₂, ∂ₓ²u₂, ∂ₓ³u₂
+export ϕₕ
 
 export ReissnerMindlinIce
 

@@ -15,9 +15,9 @@ function getMAT(k, kd, H, d, NModes, Ap, Amp)
   g = zeros(Complex{Float64},NModes+1,1);
   for i=1:NModes+1
     A[i,i]=0.5*Amp[i]*(cos(k[i]*H)*sin(k[i]*H) + k[i]*H)/(cos(k[i]*H))^2
-    f[i]=Ap*innerproduct(k[1], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[1]*H));
+    f[i]=Ap*innerproduct(k[1], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[1]*H))
     for j=1:NModes+1
-      M[i,j]=innerproduct(k[j], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[j]*H));
+      M[i,j]=innerproduct(k[j], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[j]*H))
     end
   end
   g[1]=-Ap*A[1,1]

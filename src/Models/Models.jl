@@ -19,6 +19,8 @@ export FiniteElementModel, FiniteDepthFEM
 
 export ηₖ, ξₖ
 
+export ϕₕ
+
 # Import
 import iceFEM.NonDimProblem: Ice, Fluid
 import iceFEM.NonDimProblem: NonDimensionalProblem, non_dimensionalize, non_dimensionalize!, preallocate_matrices
