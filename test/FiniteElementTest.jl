@@ -1,4 +1,5 @@
 using iceFEM
+using Gridap
 using Test
 
 ice = Ice(922.5, 2e9, 0.33, 40000, 200);
@@ -14,6 +15,7 @@ R₁ = solFE.linear_system[3][1]
 
 @testset verbose= true "Checking the validity of finite element solution" begin
   @test abs(abs(R₁) - 1.) ≤ 1e-6
+  @test ϕₕ(solFE) isa Gridap.FEFunction
 end
 
 ### Add tests for other beams here ...
