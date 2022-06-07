@@ -17,8 +17,8 @@ function _get_laplace_mat_eb!(cache, f::FiniteDepthFEM, ndp::NonDimensionalProbl
   f = assemble_vector(b, assem, V)
   K=K+Qϕ
   f=f-χ
-  #u=K\f
-  ϕₕ=FEFunction(V, f)
+  u=K\f
+  ϕₕ=FEFunction(V, u)
 end
 
 # Function to build the reduced system
