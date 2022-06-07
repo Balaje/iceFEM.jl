@@ -133,16 +133,29 @@ function preallocate_matrices(femodel::FiniteElementModel)
   nmodes = femodel.NModes
   ndofs = partition[1]*partition[2]
   nev = femodel.nev
+
   m1 = spzeros(ComplexF64,ndofs,ndofs)
+  stima = spzeros(ComplexF64,ndofs,ndofs)
   m2 = spzeros(ComplexF64,nmodes+1,ndofs)
   v1 = zeros(ComplexF64,ndofs)
+  loadvec = zeros(ComplexF64,ndofs)
+
   fefunc = Vector{FEFunction}(undef, nev+1)
+
   H = zeros(ComplexF64,nev,nev)
   F = zeros(ComplexF64,nev)
-  m1,m2,v1,fefunc,H,F
+
+  A = zeros(ComplexF64, nmodes+1, nmodes+1)
+  M = zeros(ComplexF64, nmodes+1, nmodes+1)
+  f = zeros(ComplexF64, nmodes+1)
+  g = zeros(ComplexF64, nmodes+1)
+
+  Ref = zeros(ComplexF64, nmodes+1)
+
+  (A,M,f,g), (m1,stima,m2,v1,loadvec), (fefunc,H,F,Ref)
 end
 
-function solve!(cache,ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
+function solve!(cache, ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
   ndp = non_dimensionalize(ice, fluid, ω)
   fem = FiniteDepthFEM(ice, fluid, ω, femodel.dim, femodel.partition, femodel.nev, ptype)
   α = ndp.α
@@ -162,31 +175,35 @@ function solve!(cache,ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementM
   Γ₃ = fem.Γs[1]
   Γ₄ = fem.Γs[2]
 
-  Qϕ,pp,χ,ϕₖʰ,H,F = cache
+  cache1, cache2, cache3 = cache
 
   (verbosity > 0) && print("Obtaining non-local boundary condition ...\n")
-  getMQχ!(Qϕ, χ, pp, k, kd, HH, γ, NModes, Aₚ, Γ₄, fem.fespace, exp.(0*kd))
+  getMQχ!((cache1,cache2), k, kd, HH, γ, NModes, Aₚ, Γ₄, fem.fespace, exp.(0*kd))
+  Qϕ, K, pp, χ, f = cache2
+  ϕₖʰ, H, F, Ref = cache3
 
   (verbosity > 0) && print("Solving Diffraction Potential ...\n")
-  ϕₖʰ[1] = _get_laplace_mat_eb!(fem, ndp, ptype, μ[1], 0, 0, Qϕ, χ)
+  ϕₖʰ[1] = _get_laplace_mat_eb!((Qϕ,K,χ,f), fem, ndp, ptype, μ[1], 0, 0)
+  χ=0*χ; f=0*f
 
   (verbosity > 0) && print("Solving Radiation Potential ... ")
   for m=1:fem.nev
-    ϕₖʰ[m+1] = _get_laplace_mat_eb!(fem, ndp, ptype, μ[m], 0, ω*𝑙, Qϕ, 0*χ)
+    ϕₖʰ[m+1] = _get_laplace_mat_eb!((Qϕ,K,χ,f), fem, ndp, ptype, μ[m], 0, ω*𝑙)
     (verbosity > 0) && print(string(m)*"...")
   end
   (verbosity > 0) && print("\n")
 
   (verbosity > 0) && print("Solving the reduced system ...\n")
-  λ = _build_reduced_system!(H, F, μ, ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1],
-                                         ndp, Γ₃, fem.fespace, ptype, 0)
+  λ = _build_reduced_system!(cache3, μ, ndp, Γ₃, fem.fespace, ptype, 0)
+  #λ = F
+
+  #@time _build_reduced_system!(cache3, μ, ndp, Γ₃, fem.fespace, ptype, 0)
 
   ϕʰ = _compute_potential(ϕₖʰ[1], ϕₖʰ[2:fem.nev+1], λ)
 
-  Ref = get_ref_coeff(ϕʰ, NModes, k, kd, HH, γ, Γ₄, Aₚ, exp.(0*kd))
+  get_ref_coeff((cache1,Ref), ϕʰ, NModes, k, kd, HH, γ, Γ₄, Aₚ, exp.(0*kd))
 
-  FiniteElementSolution(ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1], vec(λ),
-                        (H, F, Ref), ndp, ptype)
+  FiniteElementSolution(ϕₖʰ[1], ϕₖʰ[2:femodel.nev+1], vec(λ),(H, F, Ref), ndp, ptype)
 end
 
 function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)

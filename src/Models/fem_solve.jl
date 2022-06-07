@@ -1,46 +1,38 @@
-function _get_laplace_mat_eb!(f::FiniteDepthFEM, ndp::NonDimensionalProblem, beam_style, β, x₀, ω, Qϕ, χ)
+function _get_laplace_mat_eb!(cache, f::FiniteDepthFEM, ndp::NonDimensionalProblem, beam_style, β, x₀, ω)
   Ω = f.mesh
   Γ₃ = f.Γs[1]
   V = f.fespace
-  η(x) = ω*ηₖ(x[1]-x₀, β, ndp, beam_style)[3]
-  ϕₕ = _return_matrices(Ω, Γ₃, V, Qϕ, χ, η)
-end
-
-# function _get_laplace_mat_eb(Ω, Γ, V, QΦ, χ, L, ω, ::FreeFree, offset)
-#   if(μₘ==0)
-#     η(x) = ω*(x[1]-0.5*L)
-#     _return_matrices(Ω, Γ₃, Vh, Vh0, QΦ, χ, L, ω, η)
-#   elseif(μₘ==-1)
-#     η₂(x) = ω*x[1]^0
-#     _return_matrices(Ω, Γ₃, Vh, Vh0, QΦ, χ, L, ω, η₂)
-#   else
-#     η₁(x) = ω*((cos(L*μₘ) - cosh(L*μₘ))*(sin(μₘ*(x[1]-offset)) + sinh(μₘ*(x[1]-offset)))-
-#       (sin(L*μₘ) - sinh(L*μₘ))*(cos(μₘ*(x[1]-offset)) + cosh(μₘ*(x[1]-offset))))/
-#       (cos(L*μₘ) - cosh(L*μₘ))
-#     _return_matrices(Ω, Γ₃, Vh, Vh0, QΦ, χ, L, ω, η₁)
-#   end
-# end
-
-function _return_matrices(Ω, Γ₃, V, QΦ, χ, η)
+  η(x) = 1im*ω*ηₖ(x[1]-x₀, β, ndp, beam_style)[3]
   dΩ=Measure(Ω,2); # Measure of the domains
   dΓ₃=Measure(Γ₃,8); #Interface boundary.
   a(u,v) = ∫( ∇(v)⊙∇(u) )*dΩ
   b(v) = ∫(η*v)*dΓ₃
-  op=AffineFEOperator(a,b,V,V);
-  K=op.op.matrix+QΦ;
-  f=(1im)*op.op.vector-χ;
-  u = K\f
-  ϕ = FEFunction(V, u)
+  Qϕ,K,χ,f = cache
+  v = get_fe_basis(V)
+  u = get_trial_fe_basis(V)
+  assem = SparseMatrixAssembler(V,V)
+  #Gridap.FESpaces.assemble_matrix!(a, K, assem, V, V)
+  #Gridap.FESpaces.assemble_vector!(b, f, assem, V)
+  K = assemble_matrix(a, assem, V, V)
+  f = assemble_vector(b, assem, V)
+  K=K+Qϕ
+  f=f-χ
+  #u=K\f
+  ϕₕ=FEFunction(V, f)
 end
 
 # Function to build the reduced system
-function _build_reduced_system!(H, F, μ, ϕ₀, ϕₖ, ndp, Γ, V, beam_style, L₀)
+function _build_reduced_system!(cache, μ, ndp, Γ, V, beam_style, L₀)
   α = ndp.α
   β = 1
   γ = ndp.γ
   𝑙 = ndp.𝑙
   g = ndp.geo[end]
   ω = √(α*g/𝑙)
+
+  ϕs, H, F = cache
+  ϕ₀ = ϕs[1]
+  ϕₖ = ϕs[2:end]
 
   dΓ=Measure(Γ,6)
   nev=length(μ)
@@ -59,6 +51,7 @@ function _build_reduced_system!(H, F, μ, ϕ₀, ϕₖ, ndp, Γ, V, beam_style, 
       H[i,j] = H[i,j] + (1im*ω/g)*sum(∫(ξ*ϕₖ[i])*dΓ)
     end
   end
+  cache = ϕs,H,F
   λ=H\F
 end
 
