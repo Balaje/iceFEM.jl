@@ -17,16 +17,16 @@ fluid = Fluid(ρₒ, k₀, g, H, ϵ*L)
 ω = 2π/100
 # Solve Bedrock problem using FEM
 fe_model = FiniteElementModel(2, (100,20), 10, 5) # dim, partition, nev, NModes
-sol_bedrock = solve(ice, fluid, ω, FreeBedrock(), fe_model)
+sol_bedrock = iceFEM.solve(ice, fluid, ω, FreeBedrock(), fe_model)
 
 # Change shelf length and run for clamped BC using Finite Depth
 ice = Ice(ρᵢ, Eᵢ, ν, ϵ*L, h)
 fluid = Fluid(ρₒ, 0, g, H, ϵ*L)
-sol_clamped_emm = solve(ice, fluid, ω, FreeClamped(), FiniteDepth(5))
+sol_clamped_emm = iceFEM.solve(ice, fluid, ω, FreeClamped(), FiniteDepth(5))
 
 # Solve the same problem using FEM with clamped BC
 # NOTE: Switch on verbose mode.
-sol_clamped = solve(ice, fluid, ω, FreeClamped(), fe_model, verbosity = 1)
+sol_clamped = iceFEM.solve(ice, fluid, ω, FreeClamped(), fe_model, verbosity = 1)
 
 # Plot all the solutions
 x₁ = LinRange(0, sol_bedrock.ndp.geo[4], 200)

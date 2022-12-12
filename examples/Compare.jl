@@ -22,7 +22,7 @@ fluid = Fluid(ρₒ, 0, g, H, 0) # Set the bedrock parameters = 0
 #################################################
 BeamType = FreeClamped()
 WaterType = ShallowWater()
-sol = solve(ice, fluid, ω, BeamType, WaterType)
+sol = iceFEM.solve(ice, fluid, ω, BeamType, WaterType)
 Aₚ = g/(1im*ω)
 @show abs(sol.a₀[1]/Aₚ)
 # Visualize the solution
@@ -38,7 +38,7 @@ title!(plt_1, "Clamped \$x = L\$, Wave Period = \$"*string(round(2π/ω, digits=
 # Eg 1: Solve one frequency domain problem for hinged ice-shelf
 #################################################
 BeamType = FreeHinged()
-sol = solve(ice, fluid, ω, BeamType, WaterType)
+sol = iceFEM.solve(ice, fluid, ω, BeamType, WaterType)
 Aₚ = g/(1im*ω)
 @show abs(sol.a₀[1]/Aₚ)
 # Visualize the solution
@@ -60,7 +60,7 @@ k₀ = 1e9 # Stiffness of the bedrock
 x₀ = 0.7*L # For the grounding line problem
 fluid = Fluid(ρₒ, k₀, g, H, x₀)
 BeamType = FreeBedrock()
-sol = solve(ice, fluid, ω, BeamType, WaterType)
+sol = iceFEM.solve(ice, fluid, ω, BeamType, WaterType)
 Aₚ = g/(1im*ω)
 @show abs(sol.a₀[1]/Aₚ)
 # Visualize the solution

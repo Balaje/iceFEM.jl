@@ -30,7 +30,7 @@ Aₚ = g/(1im*ω)
 # Visualize the solution
 xg = sol₁.ndp.geo[4] # Grounding line location
 LL = sol₁.ndp.geo[1] # Non dimensional length
-𝑙 = sol₁.ndp.𝑙
+𝑙 = abs(sol₁.ndp.𝑙)
 x₁ = 0:0.01:xg; x₂ = xg:0.01:LL
 U₁ = u₁(x₁, sol₁)
 U₂ = u₂(x₂, sol₁)
@@ -87,8 +87,8 @@ for ω in [2π/50, 2π/100, 2π/200, 2π/8000]
   for i = 1:length(k₀ₛ)
     fl = Fluid(ρₒ, k₀ₛ[i], g, H, x₀)
     local sol = solve(ice, fl, ω, BeamType, WaterType)
-    uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol))
-    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol))
+    uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol)[1])
+    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol)[1])
   end
   plot!(plt3_1, k₀ₛ, uₓ₀ₛ, label="\$T = \$ "*string(round((2π)/ω, digits=4))*" \$s\$")
   plot!(plt3_2, k₀ₛ, ∂ₓuₓ₀ₛ, label="\$T = \$ "*string(round((2π)/ω, digits=4))*" \$s\$")
@@ -119,8 +119,8 @@ for th in 200
     ic = Ice(ρᵢ, Eᵢ, ν, L, th)
     fl = Fluid(ρₒ, k₀ₛ[i], g, H, x₀)
     local sol = solve(ic, fl, ω, BeamType, WaterType)
-    uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol))
-    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol))
+    uₓ₀ₛ[i] = abs(u₁(sol.ndp.geo[4], sol)[1])
+    ∂ₓuₓ₀ₛ[i] = abs(∂ₓu₁(sol.ndp.geo[4], sol)[1])
 
     r₁ = -sol.p[1]; r₂ = -sol.p[2];
     𝐴s[i] = abs(1/(r₁*r₂))

@@ -208,7 +208,7 @@ end
 
 function solve(ice::Ice, fluid::Fluid, ω, ptype, femodel::FiniteElementModel; verbosity=0)
   cache = preallocate_matrices(femodel);
-  solve!(cache, ice, fluid, ω, FreeClamped(), femodel; verbosity=verbosity)
+  solve!(cache, ice, fluid, ω, ptype, femodel; verbosity=verbosity)
 end
 
 function u₁(x, fes::FiniteElementSolution)
