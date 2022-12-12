@@ -1,6 +1,6 @@
 struct Ice <: Any
   ρᵢ::Float64
-  Eᵢ::Float64
+  Eᵢ::Complex{Float64}
   ν::Float64
   L::Float64
   h::Float64
@@ -40,7 +40,7 @@ function non_dimensionalize!(cache, Ice::Ice, Fluid::Fluid, ω)
   H = Fluid.H
   x₀ = Fluid.x₀
 
-  D = Eᵢ*h^3/(12*(1-ν^2))
+  D = real(Eᵢ)*h^3/(12*(1-ν^2))
   cache.𝑙 = (D/(ρₒ*g))^0.25
   cache.𝑘 = (k₀/(ρₒ*g))^0.25
   cache.γ = (ρᵢ/ρₒ)*(h/cache.𝑙)

@@ -20,7 +20,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, fd::FiniteDepth)
   solve(Ice, Fluid, ω, FreeClamped(), fd)
 end
 
-function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}, fd::FiniteDepth)
+function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}, fd::FiniteDepth; β=1)
   N = fd.N
   ndp = non_dimensionalize(Ice, Fluid, ω)
   α = ndp.α
@@ -36,7 +36,7 @@ function solve(Ice::Ice, Fluid::Fluid, ω, ptype::Union{FreeClamped, FreeHinged}
   Aₚ = g/(1im*ω)
 
   k = dispersion_free_surface(α, N, HH)
-  κ = dispersion_ice(α, 1., γ, N+2, HH-γ)
+  κ = dispersion_ice(α, β, γ, N+2, HH-γ)
 
   function innerproduct(k, kappa, H, d)
     if(abs(k-kappa)>=1e-7)
@@ -365,7 +365,7 @@ end
 
 ### Add a new interface to implement the iceberg vibration problem
 ## NOTE: This file needs to be split into modules.
-function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
+function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth; β=1.)
   N = fd.N
   ndp = non_dimensionalize(ice, fluid, ω)
   α = ndp.α
@@ -381,7 +381,7 @@ function solve(ice::Ice, fluid::Fluid, ω, ::FreeFree, fd::FiniteDepth)
   Aₚ = g/(1im*ω)
 
   k = dispersion_free_surface(α, N, HH)
-  κ = dispersion_ice(α, 1., γ, N+2, HH-γ)
+  κ = dispersion_ice(α, β, γ, N+2, HH-γ)
 
   function innerproduct(k, kappa, H, d)
     if(abs(k-kappa)>=1e-7)

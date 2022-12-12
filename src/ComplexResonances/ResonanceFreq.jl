@@ -1,10 +1,9 @@
 ##########################################################
 # Function to Compute Resonance Frequency of the system  #
 ##########################################################
-function computeResonanceFrequency(ice, fluid, ω₀, verbosity=0)
+function computeResonanceFrequency(ice, fluid, ω₀; verbosity=0, tol=1e-8)
   count = 1
   dw = 1e-6
-  tol=1e-40
   fd = FiniteDepth(4)
   Δw = 1
   while (abs(Δw) > tol) && (count ≤ 50)
@@ -18,6 +17,7 @@ function computeResonanceFrequency(ice, fluid, ω₀, verbosity=0)
     (verbosity > 0) && print(string(Δw)*"\n")
     dwₛ = sort(dwₛ,by=x->abs(x))
     Δw = dwₛ[1]
+    condH = cond(Hⁿ⁺¹)
     (verbosity > 1) && print("Δw = "*string(Δw)*"\t ω₀ = "*string(ω₀)*"\t cond(H) = "*string(condH)*"...\n")
     if(!isinf(abs(Δw)))
       ω₀ = ω₀ + Δw
