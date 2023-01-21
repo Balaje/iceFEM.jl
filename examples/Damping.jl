@@ -47,35 +47,53 @@ strain²S = Vector{Float64}(undef,length(S))
 fill!(strain²S,0.0)
 
 strain_exp = readdlm("./examples/strain.txt",',', Float64)
-moving_average(vs,n) = [sum(@view vs[i:(i+n-1)])/n for i in 1:(length(vs)-(n-1))]
+plt3 = plot()
+# plot!(plt3, strain_exp[:,1], strain_exp[:,2], label="")
 
-for A₀ ∈ 0.5:0.5:2
+α₀ = 0.1
+#= A₀s = LinRange(1,40,400)
+βs = reshape([(1 - A₀/(α₀ + 1im*ω)) for ω in ωs for A₀ in A₀s],(400,400))
+pltC = contourf(ωs, A₀s, abs.(βs))
+xlabel!(pltC, "\$ \\omega \$ (in Hz)")
+ylabel!(pltC, "\$ |A_0| \$ (damping term)")
+ =#
+
+#for A₀ ∈ vcat(0,0.1,0.2,1,10:10:30)
+for A₀ ∈ 10:10:30
   Uₛ = zeros(Float64,length(ωs))
   ∂ₓ²Uₛ = zeros(Float64,length(ωs))
   for i in 1:length(ωs)
-    α₀ = A₀
     β = 1 - A₀/(α₀ + 1im*ωs[i])
     local fd = solve(ice, fluid, ωs[i], BeamType, WaterType; β = β)
     local x = 0:0.01:ndproblem.geo[1]
     Uₛ[i] = maximum(abs.(u₁(x, fd))) # Displacement
-    ∂ₓ²Uₛ[i] = maximum(abs.(∂ₓ²u₁(x, fd)))*(ndproblem.geo[3])*(1e6) # Strain (in μ-strain)
+    ∂ₓ²Uₛ[i] = maximum(abs.(∂ₓ²u₁(x, fd)))*(ndproblem.geo[3])*(10^6) # Strain (in μ-strain)
     strain²S[i] = (∂ₓ²Uₛ[i])^2*S[i]
   end
-
-  plot!(plt, ωs/2/π, ∂ₓ²Uₛ, label="Strain A₀ = "*string(A₀), yaxis=:log10, line=(:solid, 2))
+  # Strain
+  plot!(plt, ωs/(2π), ∂ₓ²Uₛ, label="Strain A₀ = "*string(A₀), line=(:solid, 2), yaxis=:log10)
   xlabel!(plt, "\$ \\omega/(2\\pi) \$ (in Hz)")
-  ylabel!(plt, "\$ \\max \\,|\\partial_x^2 U| \$")
-
-  plot!(plt1, ωs/2/π, Uₛ, label="A₀ = "*string(A₀), yaxis=:log10, line=(:solid, 2))
+  ylabel!(plt, "\$ \\max \\,|\\partial_x^2 U| \\times 10^{-6} \$ ")
+  # Displacement
+  plot!(plt1, ωs/(2π), Uₛ, label="A₀ = "*string(A₀), line=(:solid, 2), yaxis=:log10)
   xlabel!(plt1, "\$ \\omega/(2\\pi) \$ (in Hz)")
   ylabel!(plt1, "\$ \\max \\,|U| \$ (in m)")
-
-  plot!(plt2, ωs[9:end]/2/π, moving_average(strain²S,9), label="A₀ = "*string(A₀), line=(:solid, 2), yaxis=:log10)
-  plot!(plt2, strain_exp[:,1], strain_exp[:,2], label="", yaxis=:log10, legend=:outertopleft)
+  # Strain Power spectral density
+  if(10 ≤ A₀ ≤ 30)  
+    plot!(plt2, ωs/(2π), strain²S, label="A₀ = "*string(A₀), line=(:solid, 3), yaxis=:identity)
+  else
+    plot!(plt2, ωs/(2π), strain²S, label="A₀ = "*string(A₀), line=(:dash, 2), yaxis=:identity)
+  end 
   xlabel!(plt2, "\$ \\omega/(2\\pi) \$ (in Hz)")
-  ylabel!(plt2, "\$ \\epsilon^2 \\,PSD \$ (in microstrain\$^2\$ s)")
-
+  ylabel!(plt2, "\$ \\epsilon^2 \\,PSD \\times 10^{-12}\$")
+  # xlabel!(plt3, "\$ \\omega/(2\\pi) \$ (in Hz)")
+  # ylabel!(plt3, "Strain² \$\\times 10^{-12} \$")
 end
+plot!(plt2, strain_exp[:,1], strain_exp[:,2], label="Experimental", line=(:solid,2,:black), yaxis=:identity)
+
 xlims!(plt, (0.01,0.125))
 xlims!(plt1, (0.01,0.125))
 xlims!(plt2, (0.01,0.125))
+xlims!(plt3, (0.01,0.125))
+#plt2 = plot(plt2, plt3, layout=(1,2))
+plt = plot(plt, plt1, layout=(1,2))
