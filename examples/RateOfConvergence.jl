@@ -20,13 +20,6 @@ function ϕ(x, sol::FiniteDepthSolution)
   end
   X
 end
-function computePotential(ϕ₀, ϕₖ, λₖ)
-  ϕ = get_free_dof_values(ϕ₀)
-  for i in 1:length(ϕₖ)
-    ϕ = ϕ + λₖ[i]*get_free_dof_values(ϕₖ[i])
-  end
-  FEFunction(ϕ₀.fe_space, ϕ)
-end
 
 ######################################
 # Begin code
