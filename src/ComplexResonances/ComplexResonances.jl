@@ -3,7 +3,6 @@ module ComplexResonances
 using PolynomialRoots
 using LinearAlgebra
 using Interpolations
-using GenericLinearAlgebra
 using LinearAlgebra
 
 # export modules

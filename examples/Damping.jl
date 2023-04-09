@@ -47,7 +47,7 @@ strain²S = Vector{Float64}(undef,length(S))
 fill!(strain²S,0.0)
 
 strain_exp = readdlm("./examples/strain.txt",',', Float64)
-plt3 = plot()
+plt3 = plot();
 # plot!(plt3, strain_exp[:,1], strain_exp[:,2], label="")
 
 α₀ = 0.1
@@ -59,10 +59,10 @@ ylabel!(pltC, "\$ |A_0| \$ (damping term)")
  =#
 
 #for A₀ ∈ vcat(0,0.1,0.2,1,10:10:30)
-for A₀ ∈ 10:10:30
+for A₀ ∈ [0, 0.1, 0.2, 0.5, 1]
   Uₛ = zeros(Float64,length(ωs))
   ∂ₓ²Uₛ = zeros(Float64,length(ωs))
-  for i in 1:length(ωs)
+  for i in 1:lastindex(ωs)
     β = 1 - A₀/(α₀ + 1im*ωs[i])
     local fd = solve(ice, fluid, ωs[i], BeamType, WaterType; β = β)
     local x = 0:0.01:ndproblem.geo[1]
@@ -96,4 +96,4 @@ xlims!(plt1, (0.01,0.125))
 xlims!(plt2, (0.01,0.125))
 xlims!(plt3, (0.01,0.125))
 #plt2 = plot(plt2, plt3, layout=(1,2))
-plt = plot(plt, plt1, layout=(1,2))
+plt = plot(plt, plt1, layout=(2,1))
